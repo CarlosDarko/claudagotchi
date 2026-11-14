@@ -1,0 +1,15 @@
+{
+  "name": "claudagotchi",
+  "version": "0.1.0",
+  "description": "Una mascota tamagotchi que vive en tu terminal y en la statusline de Claude Code, y se alimenta de tu uso real de Claude.",
+  "type": "module",
+  "bin": { "claudagotchi": "bin/claudagotchi.js" },
+  "files": ["bin", "src", "README.md", "LICENSE"],
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node bin/claudagotchi.js",
+    "test": "node --test"
+  },
+  "keywords": ["claude", "claude-code", "tamagotchi", "statusline", "usage", "tui", "pixel-art"],
+  "license": "MIT"
+}

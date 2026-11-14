@@ -1,0 +1,10 @@
+// HTML -> PNG con Playwright (solo para generar las capturas de la documentación)
+const { chromium } = require('playwright')
+;(async () => {
+  const [html, png, w = '1100', h = '700'] = process.argv.slice(2)
+  const b = await chromium.launch()
+  const p = await b.newPage({ viewport: { width: Number(w), height: Number(h) }, deviceScaleFactor: 1 })
+  await p.goto(`file://${require('node:path').resolve(html)}`)
+  await p.screenshot({ path: png, fullPage: true })
+  await b.close()
+})()
