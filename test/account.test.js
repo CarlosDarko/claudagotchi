@@ -41,3 +41,29 @@ test('una lectura vieja con la ventana pasada no se convierte en 0 %', async () 
   assert.equal(later.session.expired, true)
   assert.equal(later.stale, true)
 })
+
+test('login propio: abre la página de Claude, canjea el código y lo usa para el %', async () => {
+  const { beginLogin, completeLogin, fetchLimits, isConnected, logout } = await import('../src/account.js')
+  const url = beginLogin({ open: false })
+  assert.match(url, /^https:\/\/claude\.ai\/oauth\/authorize\?/)
+  assert.match(url, /code_challenge_method=S256/)
+  let body
+  const fetchImpl = async (u, opts) => {
+    if (u.includes('/oauth/token')) {
+      body = JSON.parse(opts.body)
+      return { ok: true, json: async () => ({ access_token: 'tok-propio', refresh_token: 'r1', expires_in: 3600 }) }
+    }
+    assert.equal(opts.headers.Authorization, 'Bearer tok-propio')
+    return { ok: true, json: async () => ({ five_hour: { utilization: 33 } }) }
+  }
+  const r = await completeLogin('CODIGO#ESTADO', { fetchImpl })
+  assert.ok(r.ok)
+  assert.equal(body.grant_type, 'authorization_code')
+  assert.equal(body.code, 'CODIGO')
+  assert.ok(body.code_verifier)
+  assert.ok(isConnected())
+  const lim = await fetchLimits({ fetchImpl })
+  assert.equal(lim.limits.session.pct, 33)
+  logout()
+  assert.equal(isConnected(), false)
+})

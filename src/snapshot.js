@@ -6,7 +6,7 @@ import { getLocale, tmap } from './i18n/index.js'
 import { dayKey } from './util.js'
 import { projection, needHint } from './tui.js'
 import { loadConfig } from './store.js'
-import { lastError } from './account.js'
+import { lastError, isConnected } from './account.js'
 import { isInstalled } from './install.js'
 import { hooksInstalled, lastClaudeEvent } from './hooks.js'
 import { seasonOf, holidayOf, PERSONALITIES } from './pet.js'
@@ -53,6 +53,7 @@ export function snapshot({ pet, index, limits, weather = null, update = null }, 
     escenarios: tmap('w.escenario'),
     statusline: isInstalled(),
     hooks: hooksInstalled(),
+    connected: isConnected(),
     claudeEvent: lastClaudeEvent(now),
     codeEvents: (index.codeEvents || []).filter((e) => now - e.ts < 60_000),
     weather,

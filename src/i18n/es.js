@@ -334,6 +334,11 @@ export default {
     coleccion: '{n} de {total} formas descubiertas', guardada: '📸 Ficha guardada en tu carpeta de Imágenes.',
   },
   'w.tuClaude': 'Tu Claude Code',
+  'w.conectar': 'Conectar mi cuenta de Claude',
+  'w.conectarPaso': 'Se ha abierto Claude en tu navegador. Acepta, copia el código que te enseña y pégalo aquí:',
+  'w.conectarCodigo': 'Pega aquí el código',
+  'w.conectarOk': '✓ ¡Cuenta conectada! Enseguida verás tu %.',
+  'w.conectarMal': 'No ha funcionado. Vuelve a pulsar "Conectar" y pega el código nuevo.',
   'w.claudeTrabaja': 'Claude está {kind}',
   'w.claudeReposo': 'Claude en reposo',
   'w.ritmo': '{rate} tokens/min',
@@ -361,7 +366,7 @@ export default {
   'w.coleccionInfo': 'La especie sale del modelo que más usas. El oficio, de cómo trabaja Claude contigo.',
   'w.bloqueado': '¿{name}?',
   'w.sinPorQue': {
-    'sin-credenciales': 'Sin % real: inicia sesión en Claude Code con tu cuenta de Claude.',
+    'sin-credenciales': 'Para ver tu % real, conecta tu cuenta de Claude.',
     'token-caducado': 'Sin % real: tu sesión de Claude Code caducó. Ábrelo un momento y se renueva.',
     timeout: 'Sin % real: la consulta tardó demasiado. Lo reintento en unos minutos.',
     red: 'Sin % real: no hay conexión ahora mismo.',
@@ -397,6 +402,7 @@ Uso:
   claudagotchi idioma <código> cambia el idioma (disponibles: {langs})
   claudagotchi actualizar      descarga la última versión (tu mascota no se toca)
   claudagotchi diagnostico     explica por qué se ve (o no) tu % real
+  claudagotchi conectar        conecta tu cuenta de Claude para ver tu % real
   claudagotchi ciudad <nombre> pone el tiempo real de tu ciudad en el escenario
   claudagotchi avisos [no]     activa o quita los avisos de Claude Code
   claudagotchi demo            pasea por todas las etapas y humores
@@ -409,6 +415,10 @@ Datos en {dir}`,
   'cli.avisosSi': '✓ Avisos activados: te avisaré cuando Claude necesite permiso, te espere o termine.',
   'cli.ciudad': '✓ Ciudad: {city}. El escenario tendrá su tiempo real.',
   'cli.ciudadNo': 'No encuentro esa ciudad (o no hay conexión).',
+  'cli.conectar': 'Abre esta dirección (ya debería haberse abierto en tu navegador), acepta y copia el código que te enseña Claude:\n\n{url}\n\nLuego: claudagotchi conectar <código>',
+  'cli.conectado': '✓ Cuenta conectada. Ya verás tu % real.',
+  'cli.noConectado': 'No se ha podido conectar ({error}). Vuelve a empezar con "claudagotchi conectar".',
+  'cli.desconectado': '✓ Cuenta desconectada.',
   'cli.avisosNo': '✓ Avisos de Claude Code desactivados.',
   'cli.noInstalado': 'No estaba en la statusline.',
   'cli.renombrado': '✓ Ahora se llama {name}.',

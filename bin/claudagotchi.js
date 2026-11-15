@@ -130,6 +130,23 @@ async function main() {
       else installHooks()
       return console.log(args[0] === 'no' ? t('cli.avisosNo') : t('cli.avisosSi'))
     }
+    case 'conectar':
+    case 'login': {
+      const { beginLogin, completeLogin } = await import('../src/account.js')
+      const code = args.filter((a) => !a.startsWith('--')).join(' ')
+      if (!code) {
+        const url = beginLogin({ open: !args.includes('--no-abrir') })
+        return console.log(args.includes('--url') ? url : t('cli.conectar', { url }))
+      }
+      const r = await completeLogin(code)
+      return console.log(r.ok ? t('cli.conectado') : t('cli.noConectado', { error: r.error }))
+    }
+    case 'desconectar':
+    case 'logout': {
+      const { logout } = await import('../src/account.js')
+      logout()
+      return console.log(t('cli.desconectado'))
+    }
     case 'diagnostico':
     case 'doctor': {
       const { diagnose } = await import('../src/account.js')

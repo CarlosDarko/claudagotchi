@@ -115,6 +115,7 @@ La mascota vive encima de la barra de tareas, en su escenario a lo ancho de la p
 | `claudagotchi idioma es` | Cambia el idioma |
 | `claudagotchi actualizar` | Descarga la última versión (tu mascota no se toca) |
 | `claudagotchi diagnostico` | Explica por qué se ve (o no) tu % real |
+| `claudagotchi conectar` | Conecta tu cuenta de Claude para ver el % real |
 | `claudagotchi ciudad Madrid` | Pone el tiempo real de tu ciudad en el escenario |
 | `claudagotchi avisos` / `avisos no` | Activa o quita los avisos de Claude Code |
 | `claudagotchi demo` | Todas las etapas y humores con datos de mentira, sin tocar nada tuyo |
@@ -205,7 +206,7 @@ Habla solo cuando pasa algo: cuando nace o evoluciona, al saludarte cada día (c
 | Proyección (`llegas al límite en ~35m`) | Del ritmo de tokens de los últimos 20 minutos, convertido a % con la proporción de tu sesión |
 
 - **Tokens** cuenta todo, incluida la caché. **Comida** cuenta solo los tokens nuevos (entrada, salida y escritura de caché): la lectura de caché es casi gratis y no alimenta.
-- **No pide login propio** ni guarda tu token: usa el que Claude Code ya tiene (en `~/.claude/.credentials.json`, o en el Llavero en macOS). Sin él, todo funciona salvo el %.
+- **Usa el login que Claude Code ya tiene** (en `~/.claude/.credentials.json`, o en el Llavero en macOS). Si no lo encuentra (por ejemplo, si usas Claude Code desde la app de escritorio), la tarjeta enseña el botón **Conectar mi cuenta de Claude**: abre la página oficial de Claude, aceptas y pegas el código. El token se guarda solo en tu equipo, en `~/.claudagotchi/auth.json`.
 - **Una lectura vieja nunca se convierte en 0 %**: si la ventana ya pasó y no hay dato nuevo, lo dice.
 
 ## Qué mejora respecto a la idea original

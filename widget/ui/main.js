@@ -70,6 +70,7 @@ const S = {
   nextChatter: Date.now() + 8 * 60_000,
   lastWave: 0,
   yardHome: null,
+  connecting: false,
 }
 
 // ---------- Utilidades de dibujo ----------
@@ -705,6 +706,9 @@ function petHtml() {
   if (!L) {
     const why = tmap('w.sinPorQue')
     html += `<div class="dim small why">${esc(why[st.limitsReason] || why.otro)}</div>`
+    // Conectar la cuenta desde aquí mismo (login oficial de Claude en el navegador)
+    if (S.connecting) html += `<div class="dim small" style="margin-top:6px">${esc(t('w.conectarPaso'))}</div><div class="inline" style="margin-top:6px"><input id="in-code" placeholder="${esc(t('w.conectarCodigo'))}"><button data-a="connect-code">OK</button></div>`
+    else html += `<button class="connect" data-a="connect">✻ ${esc(t('w.conectar'))}</button>`
   } else {
     const s = L.session
     const proj = st.projection ? ` · <span class="${st.projection.color === '#5FD38D' ? 'ok' : 'warn'}">${esc(st.projection.text.replace(/^[▲✓] /, ''))}</span>` : ''
@@ -871,6 +875,7 @@ cardEl.addEventListener('mouseover', (e) => {
 cardEl.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && e.target.id === 'in-name') cardEl.querySelector('[data-a="save-name"]')?.click()
   if (e.key === 'Enter' && e.target.id === 'in-city') cardEl.querySelector('[data-a="save-city"]')?.click()
+  if (e.key === 'Enter' && e.target.id === 'in-code') cardEl.querySelector('[data-a="connect-code"]')?.click()
   e.stopPropagation()
 })
 cardEl.addEventListener('click', async (e) => {
@@ -897,6 +902,23 @@ cardEl.addEventListener('click', async (e) => {
     S.state.hooks = on // se ve al instante
     renderCard()
     await invoke('run_cli', { args: ['avisos', on ? 'si' : 'no'] }).catch(() => {})
+    return load()
+  }
+  if (a === 'connect') {
+    S.connecting = true
+    renderCard()
+    await invoke('run_cli', { args: ['conectar'] }).catch(() => {})
+    setTimeout(() => cardEl.querySelector('#in-code')?.focus(), 50)
+    return
+  }
+  if (a === 'connect-code') {
+    const code = cardEl.querySelector('#in-code')?.value || ''
+    const out = String(await invoke('run_cli', { args: ['conectar', code.trim()] }).catch(() => '')).trim()
+    const ok = out.startsWith('✓')
+    S.connecting = !ok
+    say(ok ? t('w.conectarOk') : t('w.conectarMal'), !ok, 6000)
+    sfx(ok ? 'logro' : 'error')
+    if (cardEl.contains(document.activeElement)) document.activeElement.blur()
     return load()
   }
   if (a === 'save-name') return action('nombre', cardEl.querySelector('#in-name')?.value)
