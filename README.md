@@ -4,44 +4,60 @@ Una mascota tipo tamagotchi que vive en tu terminal y en la barra de estado de C
 
 ![La mascota trabajando contigo, con sus necesidades y tu uso real](docs/img/principal.png)
 
+## Pruébalo en 1 minuto
+
+**1. Necesitas Node.** Si al escribir `node -v` en la terminal no sale un número 18 o mayor, instálalo desde [nodejs.org](https://nodejs.org) (el botón grande, versión LTS).
+
+**2. Abre la demo.** Pega esto en la terminal:
+
+```bash
+npx github:CarlosDarko/claudagotchi demo
+```
+
+La demo no toca nada tuyo: enseña la mascota en todas sus etapas con datos de mentira. Pulsa `→` para pasar de escena, `?` para la ayuda y `Q` para salir.
+
+**3. Adopta la tuya.** Si usas Claude Code en ese ordenador:
+
 ```bash
 npx github:CarlosDarko/claudagotchi
 ```
+
+Sale un huevo que eclosiona en cuanto usas Claude Code un poco. La primera vez se abre la ayuda sola.
+
+**4. Llévala dentro de Claude Code** (opcional). Así la ves siempre en la barra de abajo mientras trabajas:
+
+```bash
+npx github:CarlosDarko/claudagotchi instalar
+```
+
+Si ya tenías otra barra de estado, se guarda y `desinstalar` la devuelve tal cual.
+
+![La ayuda que se abre la primera vez](docs/img/ayuda.png)
 
 ## Qué es
 
 Mezcla dos cosas que ya existían por separado:
 
-- **Un monitor de uso de Claude Code**: el % real de tu sesión de 5 horas y de tu semana, cuándo se reinician, a qué ritmo gastas y si llegarás al reinicio, tokens por día, modelo y proyecto, y un mapa de 30 días.
+- **Un monitor de uso de Claude Code**: el % real de tu sesión de 5 horas y de tu semana, cuándo se reinician, a qué ritmo gastas y si llegarás al reinicio, tokens por día, modelo y proyecto, y un gráfico de 30 días.
 - **Un tamagotchi de verdad**: con hambre, felicidad, energía, salud e higiene, cacas que limpiar, enfermedades, evolución en seis etapas, cinco formas adultas, logros, minijuego y, si lo descuidas, una nube a la que se va.
 
 La gracia está en que las dos cosas están conectadas: tus tokens son su comida, el % de tu sesión es su energía y tus descansos son su salud.
 
-## Cómo se instala
+### Pensado para que se entienda solo
 
-Necesitas [Node](https://nodejs.org) 18 o superior y [Claude Code](https://claude.com/claude-code). No tiene dependencias.
+- **Lo que necesita, resaltado.** Cuando tiene hambre, está sucio o enfermo, te lo dice en su bocadillo y la tecla que lo arregla se pone en naranja.
+- **Medidores como los de un tamagotchi**, sin números que interpretar: cada necesidad tiene su color y solo se pone en rojo cuando hay que hacer algo.
+- **Se adapta a tu terminal.** Desde 80×24 (el tamaño por defecto de casi todas) hasta pantalla completa, donde la mascota se dibuja al doble de tamaño.
 
-```bash
-npx github:CarlosDarko/claudagotchi
-```
+![En una terminal de 80×24](docs/img/compacta.png)
 
-O clonado:
+## Instalarlo de forma permanente
 
-```bash
-git clone https://github.com/CarlosDarko/claudagotchi.git
-```
+Con `npx` no se instala nada: se descarga y se ejecuta. Si prefieres tener el comando `claudagotchi` siempre a mano:
 
 ```bash
-cd claudagotchi && npm link
+npm install -g github:CarlosDarko/claudagotchi
 ```
-
-Para tenerla siempre a la vista dentro de Claude Code, ponla en la statusline:
-
-```bash
-claudagotchi instalar
-```
-
-Si ya tenías otra statusline, se guarda y `claudagotchi desinstalar` la devuelve tal cual.
 
 ## Comandos
 
@@ -54,7 +70,7 @@ Si ya tenías otra statusline, se guarda y `claudagotchi desinstalar` la devuelv
 | `claudagotchi nombre Turrón` | Le cambia el nombre |
 | `claudagotchi nuevo [nombre]` | Adopta un huevo nuevo (la actual se jubila al álbum) |
 | `claudagotchi idioma es` | Cambia el idioma |
-| `claudagotchi demo` | Pasea por todas las etapas y humores sin esperar semanas |
+| `claudagotchi demo` | Todas las etapas y humores con datos de mentira, sin tocar nada tuyo |
 | `claudagotchi foto [ancho] [alto]` | Imprime un fotograma de la interfaz (útil para compartir) |
 
 ### Teclas
@@ -62,13 +78,14 @@ Si ya tenías otra statusline, se guarda y `claudagotchi desinstalar` la devuelv
 | Tecla | Acción |
 |---|---|
 | `c` | Comer (gasta 1 bocado, +25 de saciedad) |
-| `x` | Chuche (gasta 1 bocado, mucha felicidad, algo de salud) |
+| `x` | Chuche (gasta 1 bocado, mucha felicidad, quita algo de salud) |
 | `j` | Jugar: adivina con ← → hacia dónde mirará, 5 rondas |
 | `l` | Limpiar las cacas |
 | `m` | Medicina (cura, con 2 horas de espera entre tomas) |
 | `a` | Acariciar |
 | `d` | Apagar o encender la luz (dormido gasta la mitad) |
 | `tab` o `1`–`4` | Mascota · Uso · Logros · Álbum |
+| `?` | Ayuda |
 | `h` | Adoptar un huevo nuevo cuando se ha ido a la nube |
 | `q` | Salir |
 
@@ -127,7 +144,7 @@ Habla solo cuando pasa algo: cuando nace o evoluciona, al saludarte cada día (c
 | % de la sesión de 5 h y de la semana, y cuándo se reinician | De tu cuenta de Claude: primero del campo `rate_limits` que Claude Code pasa a la statusline, y si no, de la API de uso con el login que Claude Code ya tiene guardado |
 | Tokens, comida, modelos, proyectos, horas y mapa de 30 días | De los logs locales de Claude Code, `~/.claude/projects/**/*.jsonl`, leídos de forma incremental |
 | Si está trabajando y en qué (leyendo, editando, ejecutando…) | De la última actividad y la última herramienta en esos logs |
-| Proyección (`~35m hasta el límite a este ritmo`) | Del ritmo de tokens de los últimos 20 minutos, convertido a % con la proporción de tu sesión |
+| Proyección (`llegas al límite en ~35m`) | Del ritmo de tokens de los últimos 20 minutos, convertido a % con la proporción de tu sesión |
 
 - **Tokens** cuenta todo, incluida la caché. **Comida** cuenta solo los tokens nuevos (entrada, salida y escritura de caché): la lectura de caché es casi gratis y no alimenta.
 - **No pide login propio** ni guarda tu token: usa el que Claude Code ya tiene (en `~/.claude/.credentials.json`, o en el Llavero en macOS). Sin él, todo funciona salvo el %.

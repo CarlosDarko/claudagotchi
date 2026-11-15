@@ -31,7 +31,20 @@ test('cada escena de la demo se dibuja sin romperse en las cuatro vistas', () =>
 
 test('la vista principal enseña necesidades, sesión y semana', () => {
   const out = strip(renderFrame({ tab: 0, frame: 0, data: demoFrame(6), game: null }, 110, 32))
-  for (const s of ['Hambre', 'Felicidad', 'Sesión 5 h', 'Semana', 'hasta el límite']) assert.ok(out.includes(s), s)
+  for (const s of ['Hambre', 'Felicidad', 'Necesidades', 'Tu Claude', 'Sesión', 'Semana', 'al límite en']) assert.ok(out.includes(s), s)
+})
+
+test('la ayuda se dibuja y explica las teclas', () => {
+  const out = strip(renderFrame({ tab: 0, frame: 0, data: demoFrame(6), help: true }, 110, 32))
+  for (const s of ['¿Qué es esto?', 'Cómo cuidarla', 'Cómo crece']) assert.ok(out.includes(s), s)
+})
+
+test('los bordes de las tarjetas quedan alineados en todas las vistas', () => {
+  for (let tab = 0; tab < 4; tab++) {
+    const out = strip(renderFrame({ tab, frame: 0, data: demoFrame(6) }, 110, 32)).split('\n')
+    const rights = out.filter((l) => /[│╮╯]\s*$/.test(l)).map((l) => l.trimEnd().length)
+    if (tab > 0) assert.equal(new Set(rights).size <= 1, true, `vista ${tab}: ${[...new Set(rights)]}`)
+  }
 })
 
 test('terminal demasiado pequeña: aviso en vez de dibujo roto', () => {

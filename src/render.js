@@ -25,8 +25,8 @@ export function bg(hex) {
   const c = rgb(hex)
   return TRUECOLOR ? `${ESC}48;2;${c[0]};${c[1]};${c[2]}m` : `${ESC}48;5;${to256(c)}m`
 }
-export const bold = (s) => `${ESC}1m${s}${ESC}22m`
-export const dim = (s) => `${ESC}2m${s}${ESC}22m`
+export const bold = (s) => (NO_COLOR ? s : `${ESC}1m${s}${ESC}22m`)
+export const dim = (s) => (NO_COLOR ? s : `${ESC}2m${s}${ESC}22m`)
 export const paint = (hex, s) => (NO_COLOR ? s : `${fg(hex)}${s}${ESC}39m`)
 
 // Lienzo -> líneas ANSI. `zoom` 2 duplica cada píxel en ambos ejes.
@@ -67,15 +67,20 @@ export function canvasToSvg(canvas, scale = 8, background = null) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${canvas.w} ${canvas.h}" width="${canvas.w * scale}" height="${canvas.h * scale}" shape-rendering="crispEdges">${bgRect}${rects.join('')}</svg>`
 }
 
-// Ancho visible de un texto con códigos ANSI y emojis
+// Ancho visible de un texto con códigos ANSI y emojis. Los símbolos del rango
+// 2600–27BF solo ocupan dos columnas si son emoji de serie o llevan el selector FE0F.
+const WIDE_SYMBOLS = new Set([0x231a, 0x231b, 0x23e9, 0x23ea, 0x23eb, 0x23ec, 0x23f0, 0x23f3, 0x25fd, 0x25fe, 0x2614, 0x2615, 0x267f, 0x2693, 0x26a1, 0x26aa, 0x26ab, 0x26bd, 0x26be, 0x26c4, 0x26c5, 0x26ce, 0x26d4, 0x26ea, 0x26f2, 0x26f3, 0x26f5, 0x26fa, 0x26fd, 0x2705, 0x270a, 0x270b, 0x2728, 0x274c, 0x274e, 0x2753, 0x2754, 0x2755, 0x2757, 0x2795, 0x2796, 0x2797, 0x27b0, 0x27bf])
+function charWidth(cp, next) {
+  if (cp === 0xfe0f || cp === 0x200d || (cp >= 0x300 && cp < 0x370)) return 0
+  if (cp >= 0x1f000) return 2
+  if ((cp >= 0x2190 && cp <= 0x2bff) || (cp >= 0x2300 && cp <= 0x23ff)) return WIDE_SYMBOLS.has(cp) || (cp >= 0x2648 && cp <= 0x2653) || next === 0xfe0f ? 2 : 1
+  if ((cp >= 0x1100 && cp <= 0x115f) || (cp >= 0x2e80 && cp <= 0xa4cf) || (cp >= 0xac00 && cp <= 0xd7a3) || (cp >= 0xff00 && cp <= 0xff60)) return 2
+  return 1
+}
 export function visibleWidth(s) {
-  const plain = String(s).replace(/\x1b\[[0-9;]*m/g, '')
+  const cps = [...String(s).replace(/\x1b\[[0-9;]*m/g, '')].map((c) => c.codePointAt(0))
   let w = 0
-  for (const ch of plain) {
-    const cp = ch.codePointAt(0)
-    if (cp === 0xfe0f || cp === 0x200d || (cp >= 0x300 && cp < 0x370)) continue
-    w += cp >= 0x1f000 || (cp >= 0x2600 && cp <= 0x27bf) || (cp >= 0x1100 && cp <= 0x115f) || (cp >= 0x2e80 && cp <= 0xa4cf) || (cp >= 0xac00 && cp <= 0xd7a3) || (cp >= 0xff00 && cp <= 0xff60) ? 2 : 1
-  }
+  for (let i = 0; i < cps.length; i++) w += charWidth(cps[i], cps[i + 1])
   return w
 }
 
@@ -94,16 +99,10 @@ export function truncate(s, width) {
   return `${out}…`
 }
 
-// Barra de progreso con bloques parciales
-export function bar(pct, width, color, empty = '#3A3A4A') {
-  const p = Math.max(0, Math.min(100, pct ?? 0)) / 100
-  const full = Math.floor(p * width)
-  const parts = ['', '▏', '▎', '▍', '▌', '▋', '▊', '▉']
-  const rem = Math.floor((p * width - full) * 8)
-  let s = paint(color, '█'.repeat(full) + (full < width ? parts[rem] : ''))
-  const used = full + (full < width && rem ? 1 : 0)
-  s += paint(empty, '░'.repeat(Math.max(0, width - used)))
-  return s
+// Barra fina: el mismo trazo lleno y vacío, solo cambia el color
+export function bar(pct, width, color, empty = '#34324A') {
+  const n = Math.round((Math.max(0, Math.min(100, pct ?? 0)) / 100) * width)
+  return paint(color, '━'.repeat(n)) + paint(empty, '━'.repeat(Math.max(0, width - n)))
 }
 
 // Envuelve texto en líneas de como mucho `width` columnas

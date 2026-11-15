@@ -33,7 +33,7 @@ async function main() {
         data = demoFrame(Number(args[args.indexOf('--demo') + 1]) || 0)
       } else data = await refresh()
       const tab = args.includes('--uso') ? 1 : args.includes('--logros') ? 2 : args.includes('--album') ? 3 : 0
-      return console.log(renderFrame({ tab, frame: 3, data, flash: null, happyUntil: 0, game: null }, W, H).replace(/\x1b\[K/g, ''))
+      return console.log(renderFrame({ tab, frame: 3, data, flash: null, happyUntil: 0, game: null, help: args.includes('--ayuda') }, W, H).replace(/\x1b\[K/g, ''))
     }
     case 'statusline': {
       const { runStatusline } = await import('../src/statusline.js')
