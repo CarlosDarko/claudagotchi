@@ -48,12 +48,16 @@ async function main() {
     case 'instalar':
     case 'install': {
       const { install } = await import('../src/install.js')
+      const { installHooks } = await import('../src/hooks.js')
       await refresh({ allowNetwork: false })
-      return console.log(install())
+      installHooks()
+      return console.log(`${install()}\n${t('cli.avisosSi')}`)
     }
     case 'desinstalar':
     case 'uninstall': {
       const { uninstall } = await import('../src/install.js')
+      const { uninstallHooks } = await import('../src/hooks.js')
+      uninstallHooks()
       return console.log(uninstall())
     }
     case 'nombre':
@@ -76,7 +80,9 @@ async function main() {
     case 'json': {
       // Para el widget de escritorio
       const { snapshot } = await import('../src/snapshot.js')
-      return process.stdout.write(JSON.stringify(snapshot(await refresh())))
+      const { getWeather, checkUpdate } = await import('../src/world.js')
+      const [data, weather, update] = await Promise.all([refresh(), getWeather().catch(() => null), checkUpdate().catch(() => null)])
+      return process.stdout.write(JSON.stringify(snapshot({ ...data, weather, update })))
     }
     case 'accion':
     case 'action': {
@@ -94,12 +100,35 @@ async function main() {
       const limits = await getLimits({ allowNetwork: false })
       return process.stdout.write(JSON.stringify({ res, state: snapshot({ pet: loadPet(index), index, limits }) }))
     }
+    case 'ciudad':
+    case 'city': {
+      const { setCity } = await import('../src/world.js')
+      const c = await setCity(args.join(' ')).catch(() => null)
+      return console.log(c ? t('cli.ciudad', { city: `${c.name} (${c.country})` }) : t('cli.ciudadNo'))
+    }
     case 'widget-config': {
       // claudagotchi widget-config '{"scale":3}'
       const { loadConfig } = await import('../src/store.js')
       const cfg = loadConfig()
       saveConfig({ widget: { ...(cfg.widget || {}), ...JSON.parse(args[0] || '{}') } })
       return process.stdout.write(JSON.stringify(loadConfig().widget))
+    }
+    case 'hook': {
+      // Lo llama Claude Code (Notification, Stop). Lee su JSON y guarda el aviso.
+      const { handleHook } = await import('../src/hooks.js')
+      let input = {}
+      if (!process.stdin.isTTY) {
+        const chunks = []
+        for await (const c of process.stdin) chunks.push(c)
+        try { input = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}') } catch {}
+      }
+      return handleHook(args[0] || 'fin', input)
+    }
+    case 'avisos': {
+      const { installHooks, uninstallHooks } = await import('../src/hooks.js')
+      if (args[0] === 'no') uninstallHooks()
+      else installHooks()
+      return console.log(args[0] === 'no' ? t('cli.avisosNo') : t('cli.avisosSi'))
     }
     case 'diagnostico':
     case 'doctor': {
@@ -130,7 +159,8 @@ async function main() {
 }
 
 main().catch((e) => {
-  if (cmd === 'statusline') {
+  if (cmd === 'statusline' || cmd === 'hook') {
+    if (cmd === 'hook') return
     // La statusline nunca debe romper Claude Code: si algo falla, una línea discreta
     process.stdout.write('🥚 claudagotchi\n')
     return

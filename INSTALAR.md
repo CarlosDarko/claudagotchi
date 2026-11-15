@@ -10,6 +10,7 @@ Antes de instalar, cuéntaselo al usuario en una o dos frases:
 
 - Descarga un programa (unos 40 MB) en `~/.claudagotchi/bin` en macOS y Linux, o en `%LOCALAPPDATA%\Programs\claudagotchi` en Windows, y añade esa carpeta al PATH.
 - Instala la mascota de escritorio, una ventanita transparente que pasea por encima de la barra de tareas y arranca con el ordenador (se puede quitar desde su icono junto al reloj). En Windows queda en `%LOCALAPPDATA%\Claudagotchi`, en macOS en `~/Applications/Claudagotchi.app` y en Linux en `~/.claudagotchi/bin/Claudagotchi.AppImage`. Si el usuario no la quiere, añade `CLAUDAGOTCHI_SIN_WIDGET=1` al comando del paso 1.
+- Activa los avisos de Claude Code (hooks Notification y Stop en `~/.claude/settings.json`, sin tocar los que ya hubiera) para que la mascota avise cuando Claude necesita permiso o termina.
 - Pone la mascota como barra de estado de Claude Code, en `~/.claude/settings.json` (clave `statusLine`). Si ya había otra, la guarda, y `claudagotchi desinstalar` la devuelve.
 - Guarda los datos de la mascota en `~/.claudagotchi/`. Lee los logs de Claude Code de `~/.claude/projects` y no envía nada a ningún sitio, salvo la consulta del % de uso a la API de Anthropic con el login que Claude Code ya tiene.
 

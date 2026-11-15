@@ -9,7 +9,7 @@ import { dayKey, modelFamily, projectName } from './util.js'
 const KEEP_DAYS = 60
 const RECENT_MS = 8 * 3600_000
 const BREAK_MS = 15 * 60_000
-const VERSION = 3
+const VERSION = 4
 
 export function emptyIndex() {
   return {
@@ -21,6 +21,8 @@ export function emptyIndex() {
     lastActivity: 0,
     lastTool: null,
     workStart: 0,
+    pending: {},
+    codeEvents: [],
   }
 }
 
@@ -61,12 +63,48 @@ const TOOL_STYLE = {
 }
 export const toolStyle = (name) => TOOL_STYLE[name] || null
 
+// Qué tipo de comando de código es (para que la mascota reaccione)
+export function codeKind(cmd) {
+  const c = String(cmd || '')
+  if (/\bgit\s+commit\b/.test(c)) return 'commit'
+  if (/\bgit\s+push\b/.test(c)) return 'push'
+  if (/\b(npm|pnpm|yarn|bun)\s+(run\s+)?test\b|\bpytest\b|\bjest\b|\bvitest\b|\bcargo\s+test\b|\bgo\s+test\b|\bmvn\s+test\b|\bgradle\w*\s+test\b|\brspec\b|\bphpunit\b|\bdotnet\s+test\b|node\s+--test\b/.test(c)) return 'test'
+  if (/\b(npm|pnpm|yarn|bun)\s+run\s+build\b|\bcargo\s+build\b|\btsc\b|\bmake\b|\bgo\s+build\b|\bmvn\s+(package|compile)\b/.test(c)) return 'build'
+  return null
+}
+
+// ¿Ha ido bien? Por el error del resultado y por el texto que suelta
+export function codeOutcome(kind, result) {
+  if (result.is_error) return false
+  const text = (Array.isArray(result.content) ? result.content.map((x) => x.text || '').join('\n') : String(result.content || '')).slice(-4000)
+  if (kind === 'test') {
+    const failed = text.match(/(\d+)\s+(failed|failing|failures?|errors?)\b/i)
+    if (failed && Number(failed[1]) > 0) return false
+    if (/\bFAIL(ED)?\b|✗|✖/.test(text) && !/\b0 failed\b/i.test(text)) return false
+    return true
+  }
+  if (/error|fatal|failed/i.test(text) && kind !== 'commit') return !/\b0 errors?\b/i.test(text) ? false : true
+  return !/nothing to commit|fatal/i.test(text)
+}
+
 export const toolKind = (name) => TOOL_KIND[name] || (name?.startsWith('mcp__') ? 'herramientas' : name ? 'trabajando' : null)
 
 // Procesa una línea ya parseada. Exportada para los tests.
 export function ingest(index, entry, folder, seen) {
   const ts = Date.parse(entry.timestamp)
   if (!Number.isFinite(ts)) return
+  index.pending ??= {}
+  index.codeEvents ??= []
+  // Resultados de comandos de código que estábamos esperando
+  if (entry.type === 'user' && Array.isArray(entry.message?.content)) {
+    for (const r of entry.message.content) {
+      if (r.type !== 'tool_result' || !index.pending[r.tool_use_id]) continue
+      const { kind } = index.pending[r.tool_use_id]
+      delete index.pending[r.tool_use_id]
+      index.codeEvents.push({ ts, kind, ok: codeOutcome(kind, r) })
+      if (index.codeEvents.length > 40) index.codeEvents.splice(0, index.codeEvents.length - 40)
+    }
+  }
   if (entry.type === 'user' || entry.type === 'assistant') {
     if (ts > index.lastActivity) {
       if (ts - index.lastActivity > BREAK_MS) index.workStart = ts
@@ -79,6 +117,10 @@ export function ingest(index, entry, folder, seen) {
   if (tools.length && ts >= index.lastActivity) index.lastTool = tools[tools.length - 1].name
   // Las herramientas se cuentan por bloque (cada una tiene su id propio)
   for (const tu of tools) {
+    if (tu.name === 'Bash' && tu.id) {
+      const kind = codeKind(tu.input?.command)
+      if (kind) index.pending[tu.id] = { kind, ts }
+    }
     const key = `t:${tu.id || ''}`
     if (tu.id && seen.has(key)) continue
     if (tu.id) seen.add(key)
@@ -170,6 +212,7 @@ export function scan({ dir = PROJECTS_DIR, index = null, save = true, now = Date
 }
 
 function prune(state, now) {
+  for (const [id, p] of Object.entries(state.pending || {})) if (now - p.ts > 3600_000) delete state.pending[id]
   state.recent = state.recent.filter(([ts]) => now - ts < RECENT_MS).sort((a, b) => a[0] - b[0])
   const cutoff = dayKey(now - KEEP_DAYS * 86400_000)
   for (const k of Object.keys(state.days)) if (k < cutoff) delete state.days[k]

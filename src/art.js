@@ -1,5 +1,7 @@
 // Más pixel art: iconos de acción, medallas de logros y el escenario del widget.
 import { Canvas, ramp, mix } from './sprites.js'
+import { drawDecor } from './gear.js'
+import { DECOR } from './items.js'
 
 // ---------- Iconos de acción (12x12) ----------
 
@@ -79,6 +81,13 @@ const G = {
   grid: ['##.##.#', '##.##.#', '.......', '##.##.#', '##.##.#', '.......', '##.##.#'],
   tree: ['..###..', '.#####.', '#######', '.#####.', '...#...', '...#...', '.#####.'],
   lotus: ['...#...', '..###..', '#.###.#', '##.#.##', '.#####.', '..###..', '#######'],
+  branch: ['.#...#.', '.#...#.', '.#..#..', '.#.#...', '.##....', '.#.....', '.#.....'],
+  check: ['......#', '.....##', '#...##.', '##.##..', '.###...', '..#....', '.......'],
+  bag: ['..###..', '.#...#.', '#######', '#######', '#######', '#######', '.#####.'],
+  shirt: ['##...##', '#######', '.#####.', '.#####.', '.#####.', '.#####.', '.#####.'],
+  house: ['...#...', '..###..', '.#####.', '#######', '.#...#.', '.#.#.#.', '.#.#.#.'],
+  question: ['.####..', '#....#.', '....#..', '...#...', '...#...', '.......', '...#...'],
+  bird: ['..##...', '.####..', '##.###.', '.#####.', '..####.', '...#.#.', '.......'],
 }
 
 // Cada logro: su dibujo y su metal (b bronce, s plata, g oro)
@@ -89,6 +98,8 @@ export const MEDALS = {
   limpito: ['broom', 'b'], chef: ['chef', 'b'], achuchable: ['heart', 'b'], jugon: ['ball', 'b'], zen: ['lotus', 's'], superviviente: ['pill', 's'], 'dia-perfecto': ['sun', 'g'],
   noctambulo: ['moon', 'b'], madrugador: ['sun', 'b'], 'al-limite': ['flame', 'b'], fenix: ['flame', 'g'],
   'coleccion-3': ['grid', 's'], 'coleccion-10': ['grid', 'g'], reencarnacion: ['egg', 's'], dinastia: ['tree', 's'],
+  'primer-commit': ['branch', 'b'], 'cien-commits': ['branch', 'g'], 'tests-verdes': ['check', 's'], comprador: ['bag', 'b'], fashion: ['shirt', 's'],
+  decorador: ['house', 's'], secreta: ['question', 'g'], visitas: ['bird', 'b'],
 }
 const METAL = { b: '#CD8A4E', s: '#B9C6D8', g: '#F4C53D' }
 const RIBBON = { b: ['#B5523F', '#E07A55'], s: ['#4A5BB0', '#7A8CE0'], g: ['#8E44C9', '#B67CF2'] }
@@ -205,8 +216,10 @@ function bowl(c, x, base, fill) {
 }
 
 // Árbol de tokens: un fruto naranja (una chispa) por cada bocado que te queda
-function tokenTree(c, x, base, fruit, frame) {
-  const L = ramp('#4FAF62'), T = ramp('#8A5A33')
+const LEAVES = { primavera: '#5DBB6E', verano: '#4FAF62', otono: '#E0893A', invierno: '#6E9A7A' }
+
+function tokenTree(c, x, base, fruit, frame, season = 'verano') {
+  const L = ramp(LEAVES[season] || LEAVES.verano), T = ramp('#8A5A33')
   for (let y = 0; y < 11; y++) c.set(x, base - 1 - y, y % 3 ? T.base : T.light), c.set(x + 1, base - 1 - y, T.shade)
   c.set(x - 1, base - 1, T.shade), c.set(x + 2, base - 1, T.shade)
   const cx = x + 1, cy = base - 19
@@ -253,41 +266,114 @@ function fence(c, x0, x1, base) {
 
 // mode: 'isla' (un trozo alrededor de su casa) o 'completo' (todo el ancho)
 // home: x del centro de la isla. Devuelve el lienzo y los límites por los que puede pasear.
-export function drawYard(width, { mode = 'isla', home = width - 80, hunger = 70, bocados = 0, now = Date.now(), frame = 0 } = {}) {
+// Paisaje de serie a lo ancho: se repite con variedad y no tapa la casa
+function bush(c, x, base, season) {
+  const B = ramp(season === 'otono' ? '#C9823A' : '#4FAF62')
+  for (let j = -4; j <= 0; j++) for (let i = -6; i <= 6; i++) {
+    const d = (i * i) / 36 + (j * j) / 16
+    if (d <= 1) c.set(x + i, base - 1 + j, d > 0.7 ? B.shade : i + j < -3 ? B.light : B.base)
+  }
+  if (season === 'primavera') c.set(x - 2, base - 4, '#FF9CC0'), c.set(x + 3, base - 3, '#FFFFFF')
+  if (season === 'invierno') for (let i = -4; i <= 4; i++) c.set(x + i, base - 5 + (Math.abs(i) > 3 ? 1 : 0), '#F4F7FF')
+}
+function rock(c, x, base) {
+  const R = ramp('#9AA3B8')
+  c.stamp(x, base - 4, ['..rrrr..', '.rLrrrr.', 'rLrrrrrs', 'rrrrrsss'], { r: R.base, L: R.light, s: R.shade })
+}
+function tallGrass(c, x, base, frame) {
+  const sw = frame % 8 < 4 ? 0 : 1
+  c.stamp(x + sw, base - 4, ['g.g.', 'g.gg', '.gg.'], { g: '#5DAA68' })
+  c.stamp(x, base - 1, ['gggg'], { g: '#4FAF62' })
+}
+function mushrooms(c, x, base) {
+  c.stamp(x, base - 4, ['.rr..', 'rWrr.', '.w.r.', '.w.w.'], { r: '#D9474F', W: '#FFFFFF', w: '#F3E6C4' })
+}
+function smallTree(c, x, base, season, frame) {
+  tokenTree(c, x, base, 0, frame, season)
+}
+const SCENERY = ['bush', 'flowers', 'rock', 'grass', 'tree', 'bush', 'mush', 'grass', 'flowers']
+
+export function drawYard(width, { mode = 'completo', home = width - 80, hunger = 70, bocados = 0, now = Date.now(), frame = 0, decor = [], season = 'verano', holiday = null } = {}) {
   const H = YARD_H
   const c = new Canvas(width, H, null)
   const hour = new Date(now).getHours()
   const night = hour >= 21 || hour < 7
   const base = H - GROUND
+  const hx = Math.round(home)
+  const homeL = hx - 80, homeR = hx + 74
+  // Dónde va cada decoración comprada: a izquierda y derecha de la casa, alternando
+  const placed = []
+  let left = homeL - 8, right = homeR + 8
+  for (const id of decor) {
+    const w = DECOR.find((d) => d[0] === id)?.[2] || 12
+    const goLeft = (placed.length % 2 === 0 && left - w > 4) || right + w > width - 4
+    if (goLeft) {
+      left -= w + 10
+      if (left < 4) continue
+      placed.push([id, left])
+    } else {
+      if (right + w > width - 4) continue
+      placed.push([id, right])
+      right += w + 10
+    }
+  }
   let x0, x1
   if (mode === 'completo') {
     x0 = 0
     x1 = width - 1
   } else {
-    x0 = Math.max(0, Math.round(home - 78))
-    x1 = Math.min(width - 1, x0 + 156)
-    x0 = Math.max(0, x1 - 156)
+    // La isla crece con lo que pongas
+    x0 = Math.max(0, Math.min(homeL - 4, ...placed.map(([, x]) => x - 6)))
+    x1 = Math.min(width - 1, Math.max(homeR + 4, ...placed.map(([id, x]) => x + (DECOR.find((d) => d[0] === id)?.[2] || 12) + 6)))
   }
   ground(c, x0, x1, H, mode !== 'completo')
-  // Decorado repetido a lo ancho (solo en modo completo)
+  if (season === 'invierno') for (let x = x0; x <= x1; x++) if ((x * 7) % 5) c.set(x, base, '#F4F7FF')
+  // Paisaje de serie a lo ancho
+  const busy = (x) => (x > homeL - 10 && x < homeR + 10) || placed.some(([id, px]) => x > px - 8 && x < px + (DECOR.find((d) => d[0] === id)?.[2] || 12) + 8)
   if (mode === 'completo') {
-    for (let x = 30; x < width - 30; x += 97) {
-      if (Math.abs(x - home) < 90) continue
-      const k = Math.floor(x / 97) % 3
-      if (k === 0) fence(c, x, x + 15, base)
-      else if (k === 1) flower(c, x, base - 3, '#F2668B'), flower(c, x + 4, base - 2, '#B48CF0')
-      else flower(c, x, base - 2, '#5BC0F2')
+    for (let x = 18, k = 0; x < width - 18; x += 46 + ((x * 13) % 37), k++) {
+      if (busy(x)) continue
+      const kind = SCENERY[(k + Math.floor(x / 7)) % SCENERY.length]
+      if (kind === 'bush') bush(c, x, base, season)
+      else if (kind === 'rock') rock(c, x, base)
+      else if (kind === 'grass') tallGrass(c, x, base, frame + k)
+      else if (kind === 'mush') mushrooms(c, x, base)
+      else if (kind === 'tree' && !busy(x + 12) && !busy(x - 12)) smallTree(c, x, base, season, frame)
+      else if (kind === 'flowers') {
+        const cols = season === 'otono' ? ['#E0893A', '#F2C230'] : ['#F2668B', '#B48CF0', '#5BC0F2', '#FFE27A']
+        flower(c, x, base - 3, cols[k % cols.length])
+        flower(c, x + 4, base - 2, cols[(k + 1) % cols.length])
+        if (season === 'verano' || season === 'primavera') flower(c, x + 8, base - 3, cols[(k + 2) % cols.length])
+      }
     }
   }
   // El hogar: casa a la izquierda, árbol de tokens y farola a la derecha
-  const hx = Math.round(home)
   house(c, hx - 72, base, night)
+  if (holiday === 'navidad') for (let i = 0; i < 23; i += 2) c.set(hx - 72 + i, base - 14, ['#F25C5C', '#FFD23F', '#5BC0F2', '#6CC27A'][(i / 2 + frame) % 4])
   bowl(c, hx - 45, base, hunger / 100)
-  tokenTree(c, hx + 44, base, bocados, frame)
+  tokenTree(c, hx + 44, base, bocados, frame, season)
   lamp(c, hx + 66, base, night, frame)
   flower(c, hx - 34, base - 3, '#F2668B')
   flower(c, hx - 30, base - 2, '#FFE27A')
   flower(c, hx + 28, base - 3, '#B48CF0')
   flower(c, hx + 58, base - 2, '#5BC0F2')
-  return { canvas: c, walk: [x0 + 10, x1 - 10], night }
+  const env = { night, frame, season }
+  for (const [id, x] of placed) drawDecor(c, id, x, base, env)
+  return { canvas: c, walk: [x0 + 10, x1 - 10], night, placed }
+}
+
+// ---------- Visitas ----------
+const VISITOR = {
+  pajaro: (f) => [f % 4 < 2 ? ['..bb...', '.bWbb..', 'bbbbbo.', '.bbbb..', '..y.y..'] : ['.b..b..', '.bWbb..', 'bbbbbo.', '.bbbb..', '..y.y..'], { b: '#5B8FF0', W: '#FFFFFF', o: '#F2A93B', y: '#F2A93B' }],
+  gato: (f) => [['k...k...', 'kk.kk..t', 'kWkWk..t', 'kkpkk.t.', '.kkkkkk.', '.kkkkkk.', f % 4 < 2 ? '.k.k.k.k' : 'k.k.k.k.'], { k: '#5A5A6A', W: '#FFE27A', p: '#FF9CC0', t: '#5A5A6A' }],
+  cartero: (f) => [['..bbb...', '.bBBBb..', '..sss...', '..sks...', '.bbbbbb.', 'bbbbbbbB', '.bbbbbb.', f % 4 < 2 ? '.k..k...' : '..k..k..'], { b: '#3A6FD8', B: '#C9A27A', s: '#F2D8B0', k: '#1E1B2E' }],
+  mariposa: (f) => [f % 2 ? ['p.k.p', 'pPkPp', '.pkp.', 'p.k.p'] : ['..k..', 'pPkPp', 'pPkPp', '..k..'], { p: '#B48CF0', P: '#FFE27A', k: '#3A3550' }],
+  tortuga: (f) => [['..ggg...', '.gGgGg..', 'gGgGgGgs', '.ggggg.s', f % 4 < 2 ? '.s.s.s..' : 's.s.s...'], { g: '#3D8A4E', G: '#6CC27A', s: '#C9B07A' }],
+}
+
+export function drawVisitor(kind, frame = 0) {
+  const [rows, pal] = (VISITOR[kind] || VISITOR.pajaro)(frame)
+  const c = new Canvas(rows[0].length, rows.length, null)
+  c.stamp(0, 0, rows, pal)
+  return c
 }

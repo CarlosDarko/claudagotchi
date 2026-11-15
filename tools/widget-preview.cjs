@@ -17,17 +17,20 @@ const path = require('node:path')
   }).listen(0)
   const port = srv.address().port
   const b = await chromium.launch()
-  const p = await b.newPage({ viewport: { width: 760, height: 640 }, deviceScaleFactor: 2 })
+  const p = await b.newPage({ viewport: { width: 1000, height: 640 }, deviceScaleFactor: 2 })
   await p.addInitScript((m) => { window.__MOCK__ = m }, mock)
   await p.addInitScript(() => {
     document.addEventListener('DOMContentLoaded', () => {
       document.documentElement.style.background = 'linear-gradient(160deg,#1d3b5c 0%,#5a4a7a 55%,#c0766a 100%)'
     })
   })
-  p.on('pageerror', (e) => console.error('ERROR', e.message))
+  p.on('pageerror', (e) => console.error('ERROR', e.message)); p.on('console', (m) => m.type() === 'error' && console.error('CONSOLE', m.text()))
   await p.goto(`http://127.0.0.1:${port}/index.html`)
   await p.waitForTimeout(1500)
-  if (mode && mode !== 'idle') {
+  if (mode && mode.startsWith('alerta')) {
+    await p.evaluate((k) => window.__claudagotchiAlert(k), mode.split(':')[1] || 'permiso')
+    await p.waitForTimeout(500)
+  } else if (mode && mode !== 'idle') {
     await p.evaluate((tab) => window.__claudagotchiOpen(tab), mode === 'hover' ? 'mascota' : mode)
     await p.waitForTimeout(600)
   }

@@ -18,7 +18,7 @@ use tauri::tray::TrayIconBuilder;
 use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, WebviewWindow};
 use tauri_plugin_autostart::ManagerExt;
 
-const WINDOW_H: f64 = 640.0; // alto lógico: cabe la tarjeta encima de la mascota
+// La ventana ocupa toda el área de trabajo (para que pueda subirse a tus ventanas)
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 struct Rect {
@@ -94,6 +94,66 @@ async fn set_config(app: AppHandle, patch: String) -> Result<String, String> {
     Ok(out)
 }
 
+// Para los ajustes de la tarjeta (avisos, ciudad)
+#[tauri::command]
+async fn run_cli(args: Vec<String>) -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
+        run(&refs)
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+fn notify(app: AppHandle, title: String, body: String) {
+    use tauri_plugin_notification::NotificationExt;
+    let _ = app.notification().builder().title(title).body(body).show();
+}
+
+// Guarda la ficha para compartir en Imágenes/Claudagotchi y la enseña
+#[tauri::command]
+fn save_png(app: AppHandle, name: String, data: String) -> Result<String, String> {
+    use base64::Engine;
+    let b64 = data.split(',').last().unwrap_or("");
+    let bytes = base64::engine::general_purpose::STANDARD.decode(b64).map_err(|e| e.to_string())?;
+    let dir = app.path().picture_dir().or_else(|_| app.path().home_dir()).map_err(|e| e.to_string())?.join("Claudagotchi");
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let safe: String = name.chars().map(|c| if c.is_alphanumeric() { c } else { '-' }).collect();
+    let file = dir.join(format!("{}.png", safe));
+    std::fs::write(&file, bytes).map_err(|e| e.to_string())?;
+    let f = file.to_string_lossy().to_string();
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        let _ = Command::new("explorer").arg(format!("/select,{}", f)).creation_flags(0x0800_0000).spawn();
+    }
+    #[cfg(target_os = "macos")]
+    let _ = Command::new("open").args(["-R", &f]).spawn();
+    #[cfg(all(unix, not(target_os = "macos")))]
+    let _ = Command::new("xdg-open").arg(dir.to_string_lossy().to_string()).spawn();
+    Ok(f)
+}
+
+// Actualizar: lanza el instalador de una línea por separado y se cierra; el
+// instalador descarga la versión nueva y vuelve a abrir la mascota
+#[tauri::command]
+fn update_now(app: AppHandle) {
+    let base = "https://raw.githubusercontent.com/CarlosDarko/claudagotchi/main";
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        let script = format!("Start-Sleep -Seconds 2; $env:CLAUDAGOTCHI_NO_OPEN='1'; irm {}/install.ps1 | iex", base);
+        let _ = Command::new("powershell").args(["-NoProfile", "-WindowStyle", "Hidden", "-Command", &script]).creation_flags(0x0800_0000 | 0x0000_0008).spawn();
+    }
+    #[cfg(unix)]
+    {
+        let script = format!("sleep 2; curl -fsSL {}/install.sh | CLAUDAGOTCHI_NO_OPEN=1 bash", base);
+        let _ = Command::new("sh").args(["-c", &format!("nohup sh -c '{}' >/dev/null 2>&1 &", script)]).spawn();
+    }
+    app.exit(0);
+}
+
 #[tauri::command]
 fn open_full() {
     open_terminal();
@@ -131,11 +191,60 @@ fn open_terminal() {
 
 fn place_window(win: &WebviewWindow) {
     let Ok(Some(mon)) = win.primary_monitor() else { return };
-    let scale = mon.scale_factor();
     let area = mon.work_area();
-    let h = (WINDOW_H * scale) as u32;
-    let _ = win.set_size(PhysicalSize::new(area.size.width, h));
-    let _ = win.set_position(PhysicalPosition::new(area.position.x, area.position.y + area.size.height as i32 - h as i32));
+    let _ = win.set_size(PhysicalSize::new(area.size.width, area.size.height));
+    let _ = win.set_position(PhysicalPosition::new(area.position.x, area.position.y));
+}
+
+// Ventana activa: para subirse a su barra de título y para esconderse si algo va a
+// pantalla completa (un vídeo, un juego, una presentación)
+#[derive(Clone, Serialize, PartialEq)]
+struct ActiveWin {
+    x: f64,
+    y: f64,
+    w: f64,
+    h: f64,
+}
+
+#[derive(Default)]
+struct UserHidden(Mutex<bool>);
+
+fn watch_active_window(app: AppHandle) {
+    std::thread::spawn(move || {
+        let me = std::process::id() as u64;
+        let mut last: Option<ActiveWin> = None;
+        let mut hidden_by_us = false;
+        loop {
+            std::thread::sleep(Duration::from_millis(400));
+            let Some(win) = app.get_webview_window("main") else { continue };
+            let (Ok(pos), Ok(scale), Ok(Some(mon))) = (win.outer_position(), win.scale_factor(), win.primary_monitor()) else { continue };
+            let Ok(aw) = active_win_pos_rs::get_active_window() else { continue };
+            if aw.process_id == me {
+                continue;
+            }
+            let p = aw.position;
+            // En macOS vienen en puntos; en Windows y Linux, en píxeles físicos
+            let (ax, ay, aw_, ah) = if cfg!(target_os = "macos") { (p.x * scale, p.y * scale, p.width * scale, p.height * scale) } else { (p.x, p.y, p.width, p.height) };
+            let msize = mon.size();
+            let fullscreen = aw_ >= msize.width as f64 - 2.0 && ah >= msize.height as f64 - 2.0 && !aw.title.is_empty();
+            let user_hidden = *app.state::<UserHidden>().0.lock().unwrap();
+            if fullscreen && !hidden_by_us && !user_hidden {
+                let _ = win.hide();
+                hidden_by_us = true;
+            } else if !fullscreen && hidden_by_us {
+                if !user_hidden {
+                    let _ = win.show();
+                    let _ = win.set_ignore_cursor_events(true);
+                }
+                hidden_by_us = false;
+            }
+            let rect = ActiveWin { x: (ax - pos.x as f64) / scale, y: (ay - pos.y as f64) / scale, w: aw_ / scale, h: ah / scale };
+            if last.as_ref() != Some(&rect) {
+                let _ = app.emit("active-window", &rect);
+                last = Some(rect);
+            }
+        }
+    });
 }
 
 fn watch_cursor(app: AppHandle) {
@@ -208,7 +317,7 @@ fn build_tray(app: &AppHandle, state: &serde_json::Value) -> tauri::Result<()> {
     let scenes_t = state.get("escenarios").cloned().unwrap_or_default();
     let widget = state.get("widget").cloned().unwrap_or_default();
     let scale = widget.get("scale").and_then(|v| v.as_f64()).unwrap_or(2.0) as i64;
-    let scene = widget.get("scene").and_then(|v| v.as_str()).unwrap_or("isla").to_string();
+    let scene = widget.get("scene").and_then(|v| v.as_str()).unwrap_or("completo").to_string();
     let badge = widget.get("showBadge").and_then(|v| v.as_bool()).unwrap_or(true);
     let statusline = state.get("statusline").and_then(|v| v.as_bool()).unwrap_or(false);
     let autostart = app.autolaunch().is_enabled().unwrap_or(false);
@@ -224,12 +333,16 @@ fn build_tray(app: &AppHandle, state: &serde_json::Value) -> tauri::Result<()> {
     let scene_m = Submenu::with_items(app, label(&menu_t, "escenario", "Escenario"), true, &[&sc_isla, &sc_comp, &sc_no])?;
     let badge_i = CheckMenuItem::with_id(app, "badge", label(&menu_t, "porcentaje", "Mostrar el % siempre"), true, badge, None::<&str>)?;
     let sl_i = CheckMenuItem::with_id(app, "statusline", label(&menu_t, "statusline", "Mostrar en Claude Code"), true, statusline, None::<&str>)?;
+    let hooks = state.get("hooks").and_then(|v| v.as_bool()).unwrap_or(false);
+    let sound = widget.get("sound").and_then(|v| v.as_bool()).unwrap_or(true);
+    let hooks_i = CheckMenuItem::with_id(app, "hooks", label(&menu_t, "avisos", "Avisos de Claude Code"), true, hooks, None::<&str>)?;
+    let sound_i = CheckMenuItem::with_id(app, "sound", label(&menu_t, "sonidos", "Sonidos"), true, sound, None::<&str>)?;
     let auto_i = CheckMenuItem::with_id(app, "autostart", label(&menu_t, "arrancar", "Arrancar con el ordenador"), true, autostart, None::<&str>)?;
     let full = MenuItem::with_id(app, "full", label(&menu_t, "completa", "Abrir vista completa"), true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", label(&menu_t, "salir", "Salir"), true, None::<&str>)?;
     let sep = PredefinedMenuItem::separator(app)?;
     let sep2 = PredefinedMenuItem::separator(app)?;
-    let menu = Menu::with_items(app, &[&toggle, &sep, &size, &scene_m, &badge_i, &sl_i, &auto_i, &sep2, &full, &quit])?;
+    let menu = Menu::with_items(app, &[&toggle, &sep, &size, &scene_m, &badge_i, &sound_i, &hooks_i, &sl_i, &auto_i, &sep2, &full, &quit])?;
 
     app.manage(MenuItems {
         scales: vec![(s2.clone(), 2), (s3.clone(), 3), (s4.clone(), 4)],
@@ -254,6 +367,7 @@ fn build_tray(app: &AppHandle, state: &serde_json::Value) -> tauri::Result<()> {
                 "toggle" => {
                     if let Some(w) = app.get_webview_window("main") {
                         let visible = w.is_visible().unwrap_or(true);
+                        *app.state::<UserHidden>().0.lock().unwrap() = visible;
                         let _ = if visible { w.hide() } else { w.show() };
                         let _ = toggle.set_text(if visible { &hidden } else { &shown });
                     }
@@ -268,6 +382,11 @@ fn build_tray(app: &AppHandle, state: &serde_json::Value) -> tauri::Result<()> {
                     let on = sl_i.is_checked().unwrap_or(false);
                     let _ = run(&[if on { "instalar" } else { "desinstalar" }]);
                 }
+                "hooks" => {
+                    let on = hooks_i.is_checked().unwrap_or(false);
+                    let _ = run(&["avisos", if on { "si" } else { "no" }]);
+                }
+                "sound" => apply(app, serde_json::json!({ "sound": sound_i.is_checked().unwrap_or(true) })),
                 "autostart" => {
                     let al = app.autolaunch();
                     let _ = if auto_i.is_checked().unwrap_or(false) { al.enable() } else { al.disable() };
@@ -290,8 +409,10 @@ fn main() {
             }
         }))
         .plugin(tauri_plugin_autostart::Builder::new().build())
+        .plugin(tauri_plugin_notification::init())
         .manage(HitRects::default())
-        .invoke_handler(tauri::generate_handler![get_state, do_action, set_hit_rects, set_config, open_full])
+        .manage(UserHidden::default())
+        .invoke_handler(tauri::generate_handler![get_state, do_action, set_hit_rects, set_config, open_full, notify, save_png, update_now, run_cli])
         .setup(|app| {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory); // sin icono en el Dock
@@ -303,6 +424,7 @@ fn main() {
             let first_run = state.get("widget").and_then(|w| w.get("autostartSet")).is_none();
             if first_run {
                 let _ = handle.autolaunch().enable();
+                let _ = run(&["avisos", "si"]);
                 widget_config(serde_json::json!({ "autostartSet": true }));
             }
             build_tray(&handle, &state)?;
@@ -314,7 +436,8 @@ fn main() {
                 let _ = win.show();
                 let _ = win.set_ignore_cursor_events(true);
             }
-            watch_cursor(handle);
+            watch_cursor(handle.clone());
+            watch_active_window(handle);
             Ok(())
         })
         .run(tauri::generate_context!())

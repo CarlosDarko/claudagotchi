@@ -3,6 +3,21 @@
 // probar sin relojes ni ficheros.
 import { clamp, dayKey, fmtTokens, fmtDuration, fmtClock, hashStr } from './util.js'
 import { t, tmap } from './i18n/index.js'
+import { buy, use, gift, ensureInventory, gearCount, isItem } from './items.js'
+
+// Personalidad: cambia cómo bajan sus necesidades, sus frases y lo que hace en el escritorio
+export const PERSONALITIES = ['dormilon', 'gloton', 'jugueton', 'presumido', 'tranquilo', 'curioso', 'mimoso', 'travieso']
+const TRAIT = {
+  dormilon: { energia: 1.3 },
+  gloton: { hambre: 1.3 },
+  jugueton: { felicidad: 1.25 },
+  presumido: {},
+  tranquilo: { hambre: 0.85, felicidad: 0.85, higiene: 0.85 },
+  curioso: {},
+  mimoso: { felicidad: 1.15 },
+  travieso: { higiene: 1.3 },
+}
+export const SECRET_FORMS = ['buho', 'robot', 'michi', 'dorado', 'arcoiris']
 
 export const STAGES = ['huevo', 'bebe', 'nino', 'teen', 'adulto', 'leyenda']
 export const STAGE_LABEL = new Proxy({}, { get: (_, k) => tmap('stage')[k] })
@@ -34,9 +49,16 @@ export const RULES = {
 }
 
 
-export function newPet({ now = Date.now(), index = null, name = null, generation = 1, graveyard = [], achievements = {}, collection = {} } = {}) {
+export function newPet({ now = Date.now(), index = null, name = null, generation = 1, graveyard = [], achievements = {}, collection = {}, inventory = null } = {}) {
   return {
     collection,
+    personality: PERSONALITIES[hashStr(`p${now}`) % PERSONALITIES.length],
+    owned: {},
+    gear: {},
+    decor: [],
+    gifts: {},
+    codeStats: { commits: 0, testsOk: 0, testsFail: 0, pushes: 0 },
+    lastCodeTs: 0,
     v: 1,
     name: name || t('names', {}, hashStr(String(now))),
     seed: hashStr(`${now}`) % 1000,
@@ -63,6 +85,7 @@ export function newPet({ now = Date.now(), index = null, name = null, generation
     poopAcc: 0,
     awakeSincePoopH: 0,
     lastTick: now,
+    ...(inventory || {}),
     care: { goodH: 0, totalH: 0, mistakes: 0, feeds: 0, plays: 0, wins: 0, cleans: 0, meds: 0, pets: 0, breaks: 0, cures: 0 },
     critical: {},
     cooldowns: {},
@@ -95,6 +118,7 @@ export const ACHIEVEMENT_IDS = [
   'limpito', 'chef', 'achuchable', 'jugon', 'zen', 'superviviente', 'dia-perfecto',
   'noctambulo', 'madrugador', 'al-limite', 'fenix',
   'coleccion-3', 'coleccion-10', 'reencarnacion', 'dinastia',
+  'primer-commit', 'cien-commits', 'tests-verdes', 'comprador', 'fashion', 'decorador', 'secreta', 'visitas',
 ]
 export const achievementText = (id) => {
   const [name, desc] = tmap('ach')[id] || [id, '']
@@ -121,6 +145,11 @@ function ensure(s) {
   s.resets ??= 0
   s.goodStreakH ??= 0
   s.baseline.tools ??= null
+  s.personality ??= PERSONALITIES[(s.seed ?? 0) % PERSONALITIES.length]
+  s.gifts ??= {}
+  s.codeStats ??= { commits: 0, testsOk: 0, testsFail: 0, pushes: 0 }
+  s.lastCodeTs ??= 0
+  ensureInventory(s)
   return s
 }
 
@@ -148,6 +177,8 @@ export function tick(state, { index, limits = null, now = Date.now() }) {
   }
   s.baseline = { food, models: { ...(index.totals.models || {}) }, tools: { ...tools } }
   toolAchievements(s, now)
+  codeReactions(s, index, now)
+  specialEvents(s, now)
 
   const elapsedMs = Math.max(0, now - s.lastTick)
   const cappedMs = Math.min(elapsedMs, RULES.maxCatchUpH * 3600_000)
@@ -222,16 +253,18 @@ function step(s, h, { working, pct, weekPct, index, now }) {
   const asleep = isAsleep(s, pct)
   const slow = asleep ? 0.5 : 1
 
-  st.hambre = clamp(st.hambre - RULES.decay.hambre * h * slow)
-  st.felicidad = clamp(st.felicidad - RULES.decay.felicidad * h * slow + (working ? 1.5 * h : 0))
-  st.higiene = clamp(st.higiene - (RULES.decay.higiene + 2.5 * s.poops) * h)
+  const tr = TRAIT[s.personality] || {}
+  const vain = s.personality === 'presumido' && gearCount(s) >= 2 ? 1.5 * h : 0
+  st.hambre = clamp(st.hambre - RULES.decay.hambre * (tr.hambre || 1) * h * slow)
+  st.felicidad = clamp(st.felicidad - RULES.decay.felicidad * (tr.felicidad || 1) * h * slow + (working ? 1.5 * h : 0) + vain)
+  st.higiene = clamp(st.higiene - (RULES.decay.higiene * (tr.higiene || 1) + 2.5 * s.poops) * h)
 
   // Energía: con la cuenta conectada es el reverso de tu sesión. Sin ella, se cansa trabajando.
   if (pct != null) {
     const target = 100 - pct
     st.energia = clamp(st.energia + (target - st.energia) * Math.min(1, h * 4))
   } else if (asleep) st.energia = clamp(st.energia + 20 * h)
-  else st.energia = clamp(st.energia + (working ? -8 : 6) * h)
+  else st.energia = clamp(st.energia + (working ? -8 * (tr.energia || 1) : 6) * h)
 
   if (!asleep) {
     s.awakeSincePoopH += h
@@ -389,13 +422,128 @@ export function dominantStyle(styles) {
   return v / total >= RULES.styleMin && STYLES.includes(k) ? k : 'equilibrado'
 }
 
-export const collectionKey = (p) => `${p.form || 'mixto'}-${p.style || 'equilibrado'}`
+export const collectionKey = (p) => (SECRET_FORMS.includes(p.form) ? `${p.form}-secreta` : `${p.form || 'mixto'}-${p.style || 'equilibrado'}`)
 
 // Nombre completo de un adulto: especie, oficio y variante ("Opusaurio constructor brillante")
 export function formLabel(p) {
   if (p.stage !== 'adulto' && p.stage !== 'leyenda') return STAGE_LABEL[p.stage]
   const style = tmap('style')[p.style || 'equilibrado'] || ''
   return `${FORM_LABEL[p.form] || FORM_LABEL.mixto}${style ? ` ${style}` : ''}${tmap('variant')[p.variant] || ''}${p.night ? tmap('variant').noche : ''}`
+}
+
+// Formas secretas: condiciones raras al hacerse adulto
+export function secretForm(s) {
+  const total = s.nightFood + s.dayFood
+  const diet = Object.values(s.diet || {})
+  const dietTotal = diet.reduce((a, b) => a + b, 0)
+  const styles = s.styles || {}
+  const stTotal = Object.values(styles).reduce((a, b) => a + b, 0)
+  if (total > 0 && s.nightFood / total > 0.6) return 'buho'
+  if (stTotal >= 50 && (styles.hacker || 0) / stTotal > 0.7) return 'robot'
+  if ((s.care?.pets || 0) >= 150) return 'michi'
+  if (s.xp >= 300e6 && careScore(s) >= 0.85) return 'dorado'
+  if (dietTotal > 0 && diet.filter((v) => v / dietTotal >= 0.12).length >= 3) return 'arcoiris'
+  return null
+}
+
+// Lo que pasa en tu código (lo cuenta logs.js): commits, tests, push, builds
+function codeReactions(s, index, now) {
+  const evs = (index.codeEvents || []).filter((e) => e.ts > s.lastCodeTs)
+  if (!evs.length) return
+  s.lastCodeTs = Math.max(...evs.map((e) => e.ts))
+  if (now - s.lastCodeTs > 30 * 60_000) return // eventos viejos (primera lectura): sin reacción
+  const C = s.codeStats
+  const last = {}
+  for (const e of evs) {
+    if (e.kind === 'commit' && e.ok) C.commits++
+    if (e.kind === 'push' && e.ok) C.pushes++
+    if (e.kind === 'test') e.ok ? C.testsOk++ : C.testsFail++
+    last[`${e.kind}-${e.ok ? 'ok' : 'ko'}`] = e
+  }
+  const st = s.stats
+  if (last['test-ko']) {
+    st.felicidad = clamp(st.felicidad - 3)
+    say(s, t('ev.code.testKo', {}, now / 1000), 'codigo-mal', now)
+  } else if (last['test-ok']) {
+    st.felicidad = clamp(st.felicidad + 4)
+    say(s, t('ev.code.testOk', {}, now / 1000), 'codigo-bien', now)
+  }
+  if (last['build-ko']) say(s, t('ev.code.buildKo'), 'codigo-mal', now)
+  if (last['commit-ok']) {
+    st.felicidad = clamp(st.felicidad + 5)
+    say(s, t('ev.code.commit', {}, now / 1000), 'codigo-bien', now)
+  }
+  if (last['push-ok']) say(s, t('ev.code.push'), 'codigo-bien', now)
+  if (C.commits >= 1) unlock(s, 'primer-commit', now)
+  if (C.commits >= 100) unlock(s, 'cien-commits', now)
+  if (C.testsOk >= 50) unlock(s, 'tests-verdes', now)
+}
+
+// Eventos especiales del calendario y visitas
+export function seasonOf(now, lat = 40) {
+  const m = new Date(now).getMonth()
+  const north = lat >= 0
+  const seasons = ['invierno', 'invierno', 'primavera', 'primavera', 'primavera', 'verano', 'verano', 'verano', 'otono', 'otono', 'otono', 'invierno']
+  const sv = seasons[m]
+  if (north) return sv
+  return { invierno: 'verano', verano: 'invierno', primavera: 'otono', otono: 'primavera' }[sv]
+}
+
+export function holidayOf(now) {
+  const d = new Date(now)
+  const m = d.getMonth() + 1, day = d.getDate()
+  if ((m === 12 && day >= 15) || (m === 1 && day <= 6)) return 'navidad'
+  if ((m === 10 && day >= 25) || (m === 11 && day <= 2)) return 'halloween'
+  if (m === 2 && day === 14) return 'sanvalentin'
+  return null
+}
+
+const VISITORS = ['pajaro', 'gato', 'cartero', 'mariposa', 'tortuga']
+
+function specialEvents(s, now) {
+  if (s.stage === 'huevo') return
+  const hol = holidayOf(now)
+  const year = new Date(now).getFullYear()
+  const giftOnce = (key, items, textKey) => {
+    if (s.gifts[key]) return
+    s.gifts[key] = now
+    for (const id of items) gift(s, id, now)
+    say(s, t(textKey), 'regalo', now)
+  }
+  if (hol === 'navidad') giftOnce(`navidad-${year}`, ['papa-noel', 'cuernos-reno', 'arbol-navidad', 'muneco-nieve'], 'ev.navidad')
+  if (hol === 'halloween') giftOnce(`halloween-${year}`, ['calabaza'], 'ev.halloween')
+  if (hol === 'sanvalentin') giftOnce(`sanvalentin-${year}`, ['pegatinas'], 'ev.sanvalentin')
+  // Cumplemés: cada 30 días de vida
+  const months = Math.floor((now - s.born) / (30 * 86400_000))
+  if (months >= 1 && !s.gifts[`mes-${months}`]) {
+    s.gifts[`mes-${months}`] = now
+    gift(s, 'tarta', now)
+    gift(s, 'fiesta', now)
+    s.bocados = Math.min(99, s.bocados + 5)
+    say(s, t('ev.cumplemes', { n: months }), 'regalo', now)
+  }
+  // Una visita al día como mucho, a una hora al azar (determinista por día)
+  const today = dayKey(now)
+  if (s.visit && now > s.visit.until) s.visit = null
+  if (!s.gifts[`visita-${today}`]) {
+    const at = (hashStr(today + s.name) % 10) + 10 // entre las 10 y las 19
+    if (new Date(now).getHours() >= at) {
+      s.gifts[`visita-${today}`] = now
+      const kind = VISITORS[hashStr(today) % VISITORS.length]
+      s.visit = { kind, at: now, until: now + 3 * 60_000 }
+      if (kind === 'pajaro') s.bocados = Math.min(99, s.bocados + 3)
+      if (kind === 'gato') s.stats.felicidad = clamp(s.stats.felicidad + 10)
+      if (kind === 'cartero') {
+        const cheap = ['gorra', 'lazo', 'cafe', 'piruleta', 'panuelo', 'fiesta', 'setas', 'cactus', 'buzon'].filter((id) => !s.owned[id])
+        if (cheap.length) gift(s, cheap[hashStr(today + 'c') % cheap.length], now)
+      }
+      say(s, t(`ev.visita.${kind}`), 'visita', now)
+      s.visits = (s.visits || 0) + 1
+      if (s.visits >= 10) unlock(s, 'visitas', now)
+    }
+  }
+  // Limpia regalos viejos de visitas
+  for (const k of Object.keys(s.gifts)) if (k.startsWith('visita-') && k < `visita-${dayKey(now - 10 * 86400_000)}`) delete s.gifts[k]
 }
 
 function toolAchievements(s, now) {
@@ -429,6 +577,13 @@ function evolve(s, now) {
     s.form = dominantForm(s.diet)
     s.style = dominantStyle(s.styles)
     s.night = s.nightFood > s.dayFood * 0.6
+    const secret = secretForm(s)
+    if (secret) {
+      s.form = secret
+      s.secret = true
+      unlock(s, 'secreta', now)
+      say(s, t('ev.secreta'), 'evolucion', now)
+    }
     const c = careScore(s)
     s.variant = c >= 0.7 && s.care.mistakes <= 3 ? 'brillante' : c < 0.35 ? 'grunon' : 'normal'
   }
@@ -453,7 +608,25 @@ function cooldown(s, key, min, now) {
   return 0
 }
 
+const itemName = (id) => tmap('item')[id] || id
+// La tienda y el nombre funcionan también con el huevo
+function shopAct(s, action, now, arg) {
+  const stage = s.stage
+  if (stage === 'huevo') s.stage = 'bebe'
+  try {
+    return act2(s, action, now, arg)
+  } finally {
+    s.stage = stage
+  }
+}
+
 export function act(s, action, now = Date.now(), arg = null) {
+  ensure(s)
+  if (['comprar', 'usar', 'nombre'].includes(action) && s.alive) return shopAct(s, action, now, arg)
+  return act2(s, action, now, arg)
+}
+
+function act2(s, action, now, arg) {
   if (!s.alive && action !== 'nuevo') return { ok: false, msg: t('act.muerto') }
   if (s.stage === 'huevo' && !['luces', 'nuevo'].includes(action)) return { ok: false, msg: t('act.huevo') }
   const st = s.stats
@@ -529,6 +702,30 @@ export function act(s, action, now = Date.now(), arg = null) {
       s.lights = !s.lights
       return done(s.lights ? t('act.luzon') : t('act.luzoff'), 'info')
     }
+    case 'comprar': {
+      const r = buy(s, arg, now)
+      if (r.ok) {
+        if (Object.keys(s.owned).length >= 10) unlock(s, 'comprador', now)
+        if (gearCount(s) >= 5) unlock(s, 'fashion', now)
+        if (s.decor.length >= 8) unlock(s, 'decorador', now)
+        return done(t('act.comprado', { item: itemName(arg) }))
+      }
+      return { ok: false, msg: t(`act.tienda.${r.code}`, { price: r.price, item: itemName(arg) }) }
+    }
+    case 'usar': {
+      if (!isItem(arg)) return { ok: false, msg: t('act.nose') }
+      const r = use(s, arg)
+      if (!r.ok) return { ok: false, msg: t(`act.tienda.${r.code}`) }
+      if (gearCount(s) >= 5) unlock(s, 'fashion', now)
+      if (s.decor.length >= 8) unlock(s, 'decorador', now)
+      return { ok: true, msg: '' }
+    }
+    case 'nombre': {
+      const name = String(arg || '').trim().slice(0, 20)
+      if (!name) return { ok: false, msg: t('act.nombreVacio') }
+      s.name = name
+      return done(t('act.nombre', { name }))
+    }
     default:
       return { ok: false, msg: t('act.nose') }
   }
@@ -537,7 +734,8 @@ export function act(s, action, now = Date.now(), arg = null) {
 export function reincarnate(old, { now = Date.now(), index = null, name = null } = {}) {
   const graveyard = old ? [...old.graveyard] : []
   if (old?.alive) graveyard.push({ name: old.name, born: old.born, died: now, stage: old.stage, form: old.form, style: old.style, xp: old.xp, generation: old.generation, retired: true })
-  const p = newPet({ now, index, name, generation: (old?.generation || 0) + 1, graveyard, achievements: old?.achievements || {}, collection: old?.collection || {} })
+  const inventory = old ? { owned: old.owned || {}, gear: old.gear || {}, decor: old.decor || [], gifts: old.gifts || {}, bocados: old.bocados ?? 5 } : null
+  const p = newPet({ now, index, name, generation: (old?.generation || 0) + 1, graveyard, achievements: old?.achievements || {}, collection: old?.collection || {}, inventory })
   if (old) unlock(p, 'reencarnacion', now)
   if (p.generation >= 3) unlock(p, 'dinastia', now)
   say(p, t('ev.huevo', { gen: p.generation, name: p.name }), 'evolucion', now)

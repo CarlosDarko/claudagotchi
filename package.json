@@ -1,6 +1,6 @@
 {
   "name": "claudagotchi",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Una mascota tamagotchi que vive en tu terminal y en la statusline de Claude Code, y se alimenta de tu uso real de Claude.",
   "type": "module",
   "bin": { "claudagotchi": "bin/claudagotchi.js" },

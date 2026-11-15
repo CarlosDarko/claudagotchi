@@ -59,20 +59,31 @@ La gracia está en que las dos cosas están conectadas: tus tokens son su comida
 
 ### En tu escritorio, sin molestar
 
-La mascota vive encima de la barra de tareas, en su islita, como en los juegos de escritorio tipo Tiny Pasture. Es una ventana transparente y siempre encima, pero **los clics la atraviesan** salvo justo encima de ella, así que puedes seguir trabajando como si no estuviera.
+La mascota vive encima de la barra de tareas, en su escenario a lo ancho de la pantalla, como en los juegos de escritorio tipo Tiny Pasture. Es una ventana transparente y siempre encima, pero **los clics la atraviesan** salvo justo encima de ella, así que puedes seguir trabajando como si no estuviera.
 
-- **Se come lo que haces con Claude**: cada vez que Claude Code gasta tokens, le caen chispas ✻ naranjas y se las come (con un `+120k` encima).
-- **De un vistazo**: una pastilla sobre su cabeza con la chispa de Claude y el % de tu sesión (o tus tokens de hoy), y un `!` si necesita algo. La chispa gira mientras Claude trabaja.
-- **Al pasar el ratón**: su tarjeta, con tres pestañas:
-  - **Mascota**: sus necesidades, tu Claude Code (qué está haciendo, tu sesión, tu semana, cuándo se reinician y si llegarás al límite) y los botones para cuidarla, con su icono, su nombre y lo que hace cada uno.
-  - **Logros**: 33 medallas, cada una con su dibujo.
-  - **Colección**: las 30 formas adultas que puedes descubrir.
-- **Su escenario**: la casita con la chispa de Claude en el tejado, el cuenco (se vacía cuando tiene hambre), el árbol de tokens (un fruto por cada bocado que te queda) y una farola que se enciende de noche. Se cambia con un clic, en la tarjeta o en el menú: **isla**, **a lo ancho** o **sin escenario**.
-- **Está pendiente de ti**: te mira si acercas el ratón, se puede **arrastrar** a donde quieras (en modo isla, su isla se muda con ella) y **te avisa cuando Claude termina** una tarea larga, para que no tengas que estar mirando la terminal.
-- **En el icono junto al reloj**: tamaño, escenario, mostrar el % siempre, mostrar en la barra de Claude Code, arrancar con el ordenador, vista completa y salir.
+- **Te avisa de lo que pasa en Claude Code**, con sonido, saltos, la pastilla parpadeando en naranja y notificación del sistema:
+  - cuando **Claude necesita tu permiso** (insiste hasta que respondes),
+  - cuando **te está esperando** o **ha terminado**,
+  - cuando **te quedan pocos tokens** en la sesión.
+  Funciona con los hooks oficiales de Claude Code, que se activan solos (y se quitan en ⚙ o en el menú).
+- **Se come lo que haces con Claude**: cada vez que Claude Code gasta tokens, le caen chispas ✻ y se las come.
+- **Reacciona a tu código**: celebra los commits y los tests en verde, y se pone triste si fallan.
+- **Tiene vida propia**: pasea, lee, riega su árbol, persigue mariposas, se echa la siesta dentro de su casa, te saluda si acercas el ratón y, si es curiosa, **se sube a la ventana que estés usando**. Si pones algo a pantalla completa (un vídeo, un juego), se esconde.
+- **Personalidad**: dormilona, glotona, juguetona, presumida, tranquila, curiosa, mimosa o traviesa. Cambia sus frases, sus necesidades y lo que hace.
+- **Visitas y fechas especiales**: un pajarito que trae bocados, el gato del vecino, el cartero con un regalo, la tortuga sabia… Y en Navidad, Halloween, San Valentín y cada cumplemés, regalos.
+- **El tiempo real de tu ciudad** (lluvia, nieve, tormenta) y **las estaciones** en el escenario. Si llueve, saca el paraguas.
+- **Sonidos de 8 bits** para cada acción y reacción (se apagan en ⚙ o en el menú).
+- **Su tarjeta**, al pasar el ratón, con cinco pestañas:
+  - **Mascota**: sus necesidades, tu Claude Code y los botones para cuidarla.
+  - **Tienda**: **49 accesorios** (sombreros, gafas, collares, cosas en la mano, capas y alas) y **25 decoraciones** para el escenario, que se compran con bocados.
+  - **Logros**: 41 medallas.
+  - **Colección**: 30 formas adultas y 5 secretas.
+  - **⚙ Ajustes**: su **nombre**, tu ciudad, escenario (a lo ancho, isla o ninguno), tamaño, sonidos, avisos, **compartir su ficha** (una imagen para redes) y actualizar.
+- **Se actualiza sola**: cuando sale una versión nueva aparece un botón en su tarjeta y se instala con un clic.
 
 | | |
 |---|---|
+| ![Tienda](docs/img/widget-tienda.png) | ![Aviso de Claude Code](docs/img/widget-aviso.png) |
 | ![Logros](docs/img/widget-logros.png) | ![Colección](docs/img/widget-coleccion.png) |
 
 ![Algunas de las mascotas](docs/img/mascotas.png)
@@ -104,6 +115,8 @@ La mascota vive encima de la barra de tareas, en su islita, como en los juegos d
 | `claudagotchi idioma es` | Cambia el idioma |
 | `claudagotchi actualizar` | Descarga la última versión (tu mascota no se toca) |
 | `claudagotchi diagnostico` | Explica por qué se ve (o no) tu % real |
+| `claudagotchi ciudad Madrid` | Pone el tiempo real de tu ciudad en el escenario |
+| `claudagotchi avisos` / `avisos no` | Activa o quita los avisos de Claude Code |
 | `claudagotchi demo` | Todas las etapas y humores con datos de mentira, sin tocar nada tuyo |
 | `claudagotchi foto [ancho] [alto]` | Imprime un fotograma de la interfaz (útil para compartir) |
 
@@ -169,6 +182,8 @@ Las crías salen cada una de un color. La **forma adulta** sale de **cómo usas 
 | Sabio | busca en la web | gafas y libro |
 | Director | delega en subagentes | pajarita y batuta |
 | Equilibrado | hace un poco de todo | bufanda |
+
+Hay además **5 formas secretas** con condiciones raras: el **Búho nocturno**, el **Robotín**, el **Michi**, el **Dragón dorado** y el **Arcoíris**. En la colección salen como silueta con una pista.
 
 Y la **variante depende de cómo lo hayas cuidado**: **brillante** si casi siempre estuvo bien atendido, **gruñón** si no, normal en medio. Si programas sobre todo de madrugada, sale **nocturno**, con estrellitas.
 

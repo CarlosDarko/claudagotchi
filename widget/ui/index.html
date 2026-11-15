@@ -27,6 +27,11 @@
   #pet { position: absolute; bottom: 0; will-change: transform; cursor: grab; }
   #pet:active { cursor: grabbing; }
   #pet.shake { animation: shake .16s linear infinite; }
+  #pet.alert-jump { animation: ajump .45s ease-in-out infinite; }
+  @keyframes ajump { 0%, 100% { translate: 0 0; } 50% { translate: 0 -14px; } }
+  #weather { position: absolute; left: 0; bottom: 0; pointer-events: none; }
+  #weather.flash { background: rgba(255,255,255,.18); }
+  #visitor { position: absolute; bottom: 0; image-rendering: pixelated; pointer-events: none; }
   @keyframes shake { 0%, 100% { translate: 0 0; } 25% { translate: -2px 0; } 75% { translate: 2px 0; } }
   .float { position: absolute; bottom: 0; transform: translateX(-50%); pointer-events: auto; }
   .hidden { display: none !important; }
@@ -45,6 +50,9 @@
     box-shadow: 0 4px 14px rgba(0,0,0,.25); cursor: pointer;
   }
   #badge.working .claude { animation: spin 2.4s linear infinite; display: inline-block; }
+  #badge.alerting { background: #E07A55; color: #fff; animation: pulse .7s ease-in-out infinite; }
+  #badge.alerting .claude { color: #fff; }
+  @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(224,122,85,.7); scale: 1; } 50% { box-shadow: 0 0 0 10px rgba(224,122,85,0); scale: 1.12; } }
   @keyframes spin { to { rotate: 360deg; } }
   #badge .alert { color: #fff; background: var(--accent); border-radius: 50%; width: 14px; height: 14px; display: grid; place-items: center; font-size: 10px; }
 
@@ -59,6 +67,9 @@
   }
   #bubble.alert { background: #FFE9DF; }
   #bubble.alert::after { border-top-color: #FFE9DF; }
+  #bubble.claude { background: #E07A55; color: #fff; font-weight: 650; animation: pop .18s ease-out, wobble 1.2s ease-in-out 3; }
+  #bubble.claude::after { border-top-color: #E07A55; }
+  @keyframes wobble { 0%, 100% { rotate: 0deg; } 25% { rotate: -2deg; } 75% { rotate: 2deg; } }
   @keyframes pop { from { transform: translateX(-50%) scale(.9); opacity: 0; } to { transform: translateX(-50%) scale(1); opacity: 1; } }
 
   /* Tarjeta */
@@ -73,7 +84,39 @@
   .mood { margin-left: auto; font-size: 11.5px; color: var(--soft); display: flex; align-items: center; gap: 5px; white-space: nowrap; }
   .mood i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
   .tabs { display: flex; gap: 4px; margin: 9px 0 10px; padding: 3px; background: rgba(255,255,255,.05); border-radius: 10px; }
-  .tabs button { all: unset; flex: 1; text-align: center; padding: 4px 0; border-radius: 7px; font-size: 12px; color: var(--soft); cursor: pointer; }
+  .tabs button { all: unset; flex: 1; text-align: center; padding: 4px 0; border-radius: 7px; font-size: 11.5px; color: var(--soft); cursor: pointer; }
+  .update { all: unset; display: block; width: 100%; box-sizing: border-box; margin-bottom: 9px; padding: 6px 10px; border-radius: 9px; background: linear-gradient(90deg, #E07A55, #B95FA6); color: #fff; font-weight: 650; font-size: 12px; cursor: pointer; text-align: center; }
+  .pers { margin-top: 6px; }
+  .alertrow { color: #fff; background: rgba(224,122,85,.85); padding: 5px 8px; border-radius: 8px; font-weight: 600; }
+  /* Tienda */
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+  .chips button { all: unset; padding: 3px 9px; border-radius: 999px; background: rgba(255,255,255,.06); font-size: 11.5px; color: var(--soft); cursor: pointer; }
+  .chips button.on { background: var(--accent); color: #fff; font-weight: 650; }
+  .shop { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; max-height: 250px; overflow-y: auto; padding-right: 2px; }
+  .shop button { all: unset; display: grid; justify-items: center; gap: 2px; padding: 6px 2px 5px; border-radius: 10px; background: rgba(255,255,255,.05); border: 1px solid transparent; cursor: pointer; }
+  .shop button img { width: 38px; height: 38px; image-rendering: pixelated; object-fit: contain; }
+  .shop button small { font-size: 10px; color: var(--soft); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .shop button em { font-style: normal; font-size: 10px; color: #F2C230; font-weight: 650; }
+  .shop button:hover { background: rgba(255,255,255,.11); }
+  .shop button.on { border-color: var(--green); background: rgba(95,211,141,.12); }
+  .shop button.on em { color: var(--green); }
+  .shop button.cant { opacity: .5; }
+  .shop::-webkit-scrollbar { width: 5px; } .shop::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 3px; }
+  /* Ajustes */
+  .field { display: grid; gap: 4px; margin-bottom: 8px; font-size: 12px; color: var(--soft); }
+  .inline { display: flex; gap: 6px; }
+  .inline input { flex: 1; min-width: 0; padding: 6px 9px; border-radius: 8px; border: 1px solid var(--line); background: rgba(255,255,255,.06); color: var(--text); font: inherit; outline: none; }
+  .inline input:focus { border-color: var(--accent); }
+  .inline button { all: unset; padding: 6px 10px; border-radius: 8px; background: var(--accent); color: #fff; font-weight: 650; font-size: 12px; cursor: pointer; }
+  .setrow { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 7px 0; font-size: 12px; color: var(--soft); }
+  .seg { display: flex; gap: 2px; padding: 2px; background: rgba(255,255,255,.06); border-radius: 8px; }
+  .seg button { all: unset; padding: 3px 8px; border-radius: 6px; font-size: 11px; color: var(--soft); cursor: pointer; }
+  .seg button.on { background: rgba(255,255,255,.14); color: var(--text); font-weight: 650; }
+  .switch { all: unset; width: 34px; height: 19px; border-radius: 999px; background: rgba(255,255,255,.14); position: relative; cursor: pointer; transition: background .15s; }
+  .switch i { position: absolute; top: 2px; left: 2px; width: 15px; height: 15px; border-radius: 50%; background: #fff; transition: left .15s; }
+  .switch.on { background: var(--green); }
+  .switch.on i { left: 17px; }
+  .actions.two { grid-template-columns: 1fr 1fr; }
   .tabs button.on { background: rgba(255,255,255,.12); color: var(--text); font-weight: 650; }
   .tabs button:hover:not(.on) { color: var(--text); }
   .needs { display: grid; grid-template-columns: 74px 1fr; row-gap: 3px; align-items: center; }
@@ -112,7 +155,7 @@
   .actions button:active { transform: scale(.96); }
   .actions button.hot { border-color: var(--accent); background: rgba(224,122,85,.16); }
   .actions button.hot small { color: var(--text); }
-  .info { min-height: 28px; margin-top: 7px; font-size: 11.5px; color: var(--soft); line-height: 1.3; }
+  .info { min-height: 30px; margin-top: 7px; font-size: 11.5px; color: var(--soft); line-height: 1.3; }
   .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; padding-top: 7px; border-top: 1px solid var(--line); font-size: 11.5px; color: var(--dim); }
   .link { all: unset; cursor: pointer; color: var(--soft); }
   .link:hover { color: var(--text); }
@@ -140,7 +183,9 @@
 </style>
 </head>
 <body>
+  <canvas id="weather"></canvas>
   <canvas id="yard" class="hidden"></canvas>
+  <canvas id="visitor" class="hidden"></canvas>
   <canvas id="pet"></canvas>
   <div id="fx"></div>
   <div id="badge" class="float hidden"></div>

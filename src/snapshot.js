@@ -8,9 +8,13 @@ import { projection, needHint } from './tui.js'
 import { loadConfig } from './store.js'
 import { lastError } from './account.js'
 import { isInstalled } from './install.js'
+import { hooksInstalled, lastClaudeEvent } from './hooks.js'
+import { seasonOf, holidayOf, PERSONALITIES } from './pet.js'
+import { GEAR, DECOR } from './items.js'
+import { VERSION } from './version.js'
 import { RULES, ACHIEVEMENT_IDS } from './pet.js'
 
-export function snapshot({ pet, index, limits }, now = Date.now()) {
+export function snapshot({ pet, index, limits, weather = null, update = null }, now = Date.now()) {
   const m = mood(pet, { index, limits, now })
   const today = index.days[dayKey(now)] || { tokens: 0, food: 0 }
   const ev = latestEvent(pet, now, 2 * 60_000)
@@ -48,5 +52,27 @@ export function snapshot({ pet, index, limits }, now = Date.now()) {
     menu: tmap('menu'),
     escenarios: tmap('w.escenario'),
     statusline: isInstalled(),
+    hooks: hooksInstalled(),
+    claudeEvent: lastClaudeEvent(now),
+    codeEvents: (index.codeEvents || []).filter((e) => now - e.ts < 60_000),
+    weather,
+    season: seasonOf(now, weather?.lat ?? loadConfig().city?.lat ?? 40),
+    holiday: holidayOf(now),
+    update,
+    version: VERSION,
+    city: loadConfig().city?.name || null,
+    personality: pet.personality,
+    personalityText: tmap('personality')[pet.personality] || null,
+    chatter: tmap('chatter')[pet.personality] || [],
+    visit: pet.visit && now < pet.visit.until ? pet.visit : null,
+    shop: {
+      gear: GEAR.map(([id, slot, price]) => ({ id, slot, price, name: tmap('item')[id] || id })),
+      decor: DECOR.map(([id, price, w]) => ({ id, price, w, name: tmap('item')[id] || id })),
+      slots: tmap('slot'),
+    },
+    owned: pet.owned || {},
+    gear: pet.gear || {},
+    decor: pet.decor || [],
+    secretInfo: tmap('secretInfo'),
   }
 }
