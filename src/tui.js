@@ -531,7 +531,8 @@ export function achievementsView(pet, W) {
       ? [`${paint('#FFD23F', '★')} ${bold(paint(TEXT, a.name))} ${dim(new Date(ok).toLocaleDateString(t('locale')))}`, `  ${dim(truncate(a.desc, colW - 2))}`]
       : [`${paint(EMPTY, '☆')} ${paint('#6E6A88', a.name)}`, `  ${paint('#55526B', truncate(a.desc, colW - 2))}`]
   }
-  const lines = [`${bar((got / total) * 100, Math.min(30, w - 30), '#FFD23F')}  ${bold(paint(TEXT, `${got}/${total}`))} ${dim(t('ui.conseguidos'))}`, '']
+  const forms = Object.keys(pet.collection || {}).length
+  const lines = [`${bar((got / total) * 100, Math.min(30, w - 30), '#FFD23F')}  ${bold(paint(TEXT, `${got}/${total}`))} ${dim(t('ui.conseguidos'))}   ${dim(t('w.coleccionN', { n: forms, total: 30 }))}`, '']
   for (let i = 0; i < ACHIEVEMENT_IDS.length; i += 2) {
     const a = cell(ACHIEVEMENT_IDS[i])
     const b = ACHIEVEMENT_IDS[i + 1] ? cell(ACHIEVEMENT_IDS[i + 1]) : ['', '']

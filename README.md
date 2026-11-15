@@ -68,6 +68,7 @@ La mascota vive encima de la barra de tareas, en su islita, como en los juegos d
   - **Logros**: 33 medallas, cada una con su dibujo.
   - **Colección**: las 30 formas adultas que puedes descubrir.
 - **Su escenario**: la casita con la chispa de Claude en el tejado, el cuenco (se vacía cuando tiene hambre), el árbol de tokens (un fruto por cada bocado que te queda) y una farola que se enciende de noche. Se cambia con un clic, en la tarjeta o en el menú: **isla**, **a lo ancho** o **sin escenario**.
+- **Está pendiente de ti**: te mira si acercas el ratón, se puede **arrastrar** a donde quieras (en modo isla, su isla se muda con ella) y **te avisa cuando Claude termina** una tarea larga, para que no tengas que estar mirando la terminal.
 - **En el icono junto al reloj**: tamaño, escenario, mostrar el % siempre, mostrar en la barra de Claude Code, arrancar con el ordenador, vista completa y salir.
 
 | | |
