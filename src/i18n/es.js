@@ -213,6 +213,7 @@ Uso:
   claudagotchi nombre <nombre> le cambia el nombre
   claudagotchi nuevo [nombre]  adopta un huevo nuevo (la actual se jubila al álbum)
   claudagotchi idioma <código> cambia el idioma (disponibles: {langs})
+  claudagotchi actualizar      descarga la última versión (tu mascota no se toca)
   claudagotchi demo            pasea por todas las etapas y humores
   claudagotchi statusline      lo que llama Claude Code (lee JSON por stdin)
 

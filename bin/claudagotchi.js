@@ -73,6 +73,24 @@ async function main() {
       saveConfig({ lang })
       return console.log(t('cli.idioma', { lang }))
     }
+    case 'actualizar':
+    case 'update': {
+      // Vuelve a pasar el instalador: descarga la última versión y no toca la mascota
+      const { spawnSync } = await import('node:child_process')
+      const { REPO } = await import('../src/version.js')
+      const base = `https://raw.githubusercontent.com/${REPO}/main`
+      const env = { ...process.env, CLAUDAGOTCHI_NO_OPEN: '1' }
+      const r = process.platform === 'win32'
+        ? spawnSync('powershell', ['-NoProfile', '-Command', `irm ${base}/install.ps1 | iex`], { stdio: 'inherit', env })
+        : spawnSync('bash', ['-c', `curl -fsSL ${base}/install.sh | bash`], { stdio: 'inherit', env })
+      return process.exit(r.status ?? 1)
+    }
+    case 'version':
+    case '--version':
+    case '-v': {
+      const { VERSION } = await import('../src/version.js')
+      return console.log(`claudagotchi ${VERSION}`)
+    }
     default:
       console.log(t('cli.ayuda', { dir: DATA_DIR, langs: Object.keys(LOCALES).join(', ') }))
   }

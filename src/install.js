@@ -8,7 +8,12 @@ import { t } from './i18n/index.js'
 const settingsFile = () => path.join(CLAUDE_DIR, 'settings.json')
 const BIN = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'claudagotchi.js')
 
+// Compilado como programa independiente (bun --compile) el código vive dentro del
+// propio ejecutable, así que la barra de estado llama al ejecutable directamente.
+export const isStandalone = () => import.meta.url.includes('$bunfs') || import.meta.url.includes('~BUN')
+
 export function statuslineCommand() {
+  if (isStandalone()) return `"${process.execPath}" statusline`
   return `node "${BIN}" statusline`
 }
 

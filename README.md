@@ -4,33 +4,41 @@ Una mascota tipo tamagotchi que vive en tu terminal y en la barra de estado de C
 
 ![La mascota trabajando contigo, con sus necesidades y tu uso real](docs/img/principal.png)
 
-## Pruébalo en 1 minuto
+## Instalarlo
 
-**1. Necesitas Node.** Si al escribir `node -v` en la terminal no sale un número 18 o mayor, instálalo desde [nodejs.org](https://nodejs.org) (el botón grande, versión LTS).
+### La forma más fácil: pídeselo a Claude Code
 
-**2. Abre la demo.** Pega esto en la terminal:
+Abre Claude Code y pega esta frase:
 
-```bash
-npx github:CarlosDarko/claudagotchi demo
+```text
+Instala Claudagotchi siguiendo https://raw.githubusercontent.com/CarlosDarko/claudagotchi/main/INSTALAR.md
 ```
 
-La demo no toca nada tuyo: enseña la mascota en todas sus etapas con datos de mentira. Pulsa `→` para pasar de escena, `?` para la ayuda y `Q` para salir.
+Claude Code te cuenta qué va a cambiar, lo instala, comprueba que funciona y te explica cómo usarlo. No hace falta saber nada de terminales ni tener Node.
 
-**3. Adopta la tuya.** Si usas Claude Code en ese ordenador:
+### Con una línea en la terminal
+
+En **macOS o Linux**, abre la app Terminal y pega:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/CarlosDarko/claudagotchi/main/install.sh | bash
+```
+
+En **Windows**, abre PowerShell y pega:
+
+```powershell
+irm https://raw.githubusercontent.com/CarlosDarko/claudagotchi/main/install.ps1 | iex
+```
+
+Las dos descargan el programa ya preparado para tu sistema (no necesitan Node), ponen la mascota en la barra de Claude Code y la abren para que la conozcas. La primera vez sale una ayuda.
+
+Después, cuando quieras verla en grande, abre una terminal y escribe `claudagotchi`. Para ver todo lo que puede hacer sin esperar semanas, `claudagotchi demo`. Para actualizar, `claudagotchi actualizar`.
+
+### Si ya tienes Node
 
 ```bash
 npx github:CarlosDarko/claudagotchi
 ```
-
-Sale un huevo que eclosiona en cuanto usas Claude Code un poco. La primera vez se abre la ayuda sola.
-
-**4. Llévala dentro de Claude Code** (opcional). Así la ves siempre en la barra de abajo mientras trabajas:
-
-```bash
-npx github:CarlosDarko/claudagotchi instalar
-```
-
-Si ya tenías otra barra de estado, se guarda y `desinstalar` la devuelve tal cual.
 
 ![La ayuda que se abre la primera vez](docs/img/ayuda.png)
 
@@ -51,14 +59,6 @@ La gracia está en que las dos cosas están conectadas: tus tokens son su comida
 
 ![En una terminal de 80×24](docs/img/compacta.png)
 
-## Instalarlo de forma permanente
-
-Con `npx` no se instala nada: se descarga y se ejecuta. Si prefieres tener el comando `claudagotchi` siempre a mano:
-
-```bash
-npm install -g github:CarlosDarko/claudagotchi
-```
-
 ## Comandos
 
 | Comando | Qué hace |
@@ -70,6 +70,7 @@ npm install -g github:CarlosDarko/claudagotchi
 | `claudagotchi nombre Turrón` | Le cambia el nombre |
 | `claudagotchi nuevo [nombre]` | Adopta un huevo nuevo (la actual se jubila al álbum) |
 | `claudagotchi idioma es` | Cambia el idioma |
+| `claudagotchi actualizar` | Descarga la última versión (tu mascota no se toca) |
 | `claudagotchi demo` | Todas las etapas y humores con datos de mentira, sin tocar nada tuyo |
 | `claudagotchi foto [ancho] [alto]` | Imprime un fotograma de la interfaz (útil para compartir) |
 
@@ -158,7 +159,7 @@ Está inspirado en [Clauddy](https://github.com/renatoaug/claude-usage-monitor),
 |---|---|---|
 | La mascota | Reacciona a tu uso | **Vive de tu uso**: necesidades, evolución, enfermedades, muerte y álbum |
 | Dónde vive | App de escritorio flotante | En la terminal y **dentro de Claude Code**, en su statusline, donde ya estás |
-| Instalación | App nativa de 20 MB por plataforma | Un comando de Node, sin dependencias, en macOS, Linux y Windows |
+| Instalación | App nativa por plataforma | Pegando una frase en Claude Code, o una línea en la terminal. En macOS, Linux y Windows |
 | Login | Su propio OAuth | **Ninguno**: reutiliza el de Claude Code o el `rate_limits` de la statusline |
 | Tu salud | Te sugiere estirar | Los descansos **curan** a la mascota y trabajar sin parar la enferma |
 | Progreso | — | Logros, rachas, 6 etapas, 5 formas según tu modelo y variantes según tu cuidado |
