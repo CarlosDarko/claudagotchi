@@ -236,6 +236,7 @@ export default {
   'w.huevo': 'Se alimenta de los tokens que gastas con Claude Code. Eclosiona cuando coma {need} tokens.',
   'w.huevoProgreso': '{have} de {need} tokens',
   'w.nacido': '¡Ha nacido!',
+  'w.termino': '✻ ¡Claude ha terminado! Te está esperando.',
   'w.escenario': { isla: 'Isla', completo: 'A lo ancho', no: 'Sin escenario' },
   'w.acciones': {
     comer: ['Comer', '+25 de hambre. Gasta 1 bocado.'],

@@ -24,7 +24,8 @@
   }
   canvas { image-rendering: pixelated; }
   #yard { position: absolute; left: 0; bottom: 0; }
-  #pet { position: absolute; bottom: 0; will-change: transform; }
+  #pet { position: absolute; bottom: 0; will-change: transform; cursor: grab; }
+  #pet:active { cursor: grabbing; }
   #pet.shake { animation: shake .16s linear infinite; }
   @keyframes shake { 0%, 100% { translate: 0 0; } 25% { translate: -2px 0; } 75% { translate: 2px 0; } }
   .float { position: absolute; bottom: 0; transform: translateX(-50%); pointer-events: auto; }

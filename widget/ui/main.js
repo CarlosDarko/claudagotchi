@@ -48,6 +48,10 @@ const S = {
   game: null,
   happyUntil: 0,
   hatchAt: 0,
+  home: null, // centro de la isla (px de pantalla), si la has movido
+  drag: null,
+  cursor: null,
+  workSince: 0,
 }
 
 // ---------- Utilidades de dibujo ----------
@@ -98,6 +102,16 @@ function apply(state) {
   S.scale = w.scale || S.scale
   S.showBadge = w.showBadge ?? S.showBadge
   S.scene = w.scene || S.scene
+  if (w.home != null && S.home == null) S.home = w.home
+  // Claude ha terminado: llevaba un rato trabajando y ha parado
+  if (state.working && !S.workSince) S.workSince = Date.now()
+  if (!state.working && S.workSince) {
+    if (Date.now() - S.workSince > 45_000 && state.pet.alive && state.pet.stage !== 'huevo') {
+      say(t('w.termino'), false, 7000)
+      S.happyUntil = Date.now() + 2500
+    }
+    S.workSince = 0
+  }
   // Eclosión
   if (prev && prev.pet.stage === 'huevo' && state.pet.stage !== 'huevo') hatch()
   // Comida de Claude: chispas que caen y se come
@@ -229,7 +243,7 @@ function drawYardNow() {
   yardEl.classList.remove('hidden')
   const s = S.scale
   const wpx = Math.ceil(window.innerWidth / s)
-  const home = Math.max(90, wpx - 120)
+  const home = S.home != null ? Math.round(S.home / s) : Math.max(90, wpx - 120)
   const y = drawYard(wpx, { mode: S.scene, home, hunger: S.state.pet.stats.hambre, bocados: S.state.pet.bocados, frame: S.frame })
   S.walk = [y.walk[0] * s, y.walk[1] * s]
   if (yardEl.width !== wpx || yardEl.height !== YARD_H) {
@@ -246,6 +260,7 @@ function drawYardNow() {
 const STILL = ['dormido', 'trabajando', 'enfermo', 'huevo', 'nube', 'cansado']
 
 function step(dt) {
+  if (S.drag) return layout()
   const W = window.innerWidth
   const s = S.scale
   const half = (CRITTER_W * s) / 2
@@ -281,7 +296,9 @@ function layout() {
   petEl.style.height = `${h}px`
   petEl.style.left = `${Math.round(S.x - w / 2)}px`
   petEl.style.bottom = `${petBottom()}px`
-  const flip = S.game?.reveal ? (S.game.reveal === 'izq' ? -1 : 1) : S.dir
+  // Si el ratón anda cerca y está quieto, lo mira
+  const near = S.cursor && !S.walking && Math.abs(S.cursor.x - S.x) < 260 && window.innerHeight - S.cursor.y < 260
+  const flip = S.game?.reveal ? (S.game.reveal === 'izq' ? -1 : 1) : near ? Math.sign(S.cursor.x - S.x) || S.dir : S.dir
   petEl.style.transform = flip < 0 ? 'scaleX(-1)' : ''
   const hy = headY()
   place(badgeEl, hy + 6)
@@ -546,6 +563,15 @@ function petRect() {
 const inside = (p, r) => r && p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h
 
 function onCursor(p) {
+  S.cursor = p
+  if (S.drag) {
+    S.x = Math.max(20, Math.min(window.innerWidth - 20, S.drag.x0 + (p.x - S.drag.px)))
+    if (S.scene === 'isla') S.home = S.drag.home0 + (S.x - S.drag.x0)
+    if (Math.abs(p.x - S.drag.px) > 4) S.drag.moved = true
+    S.target = null
+    drawYardNow()
+    return
+  }
   const overPet = inside(p, petRect())
   const overCard = S.cardOpen && inside(p, rectOf(cardEl))
   const overBadge = badgeVisible() && inside(p, rectOf(badgeEl))
@@ -564,16 +590,38 @@ function onCursor(p) {
 let lastRects = ''
 function sendHitRects() {
   if (!TAURI) return
-  const rects = [petRect()]
-  if (S.cardOpen) rects.push(rectOf(cardEl))
-  if (badgeVisible()) rects.push(rectOf(badgeEl))
+  // Mientras se arrastra, la ventana entera recibe el ratón para no perder el 'soltar'
+  const rects = S.drag ? [{ x: 0, y: 0, w: window.innerWidth, h: window.innerHeight }] : [petRect()]
+  if (S.cardOpen && !S.drag) rects.push(rectOf(cardEl))
+  if (badgeVisible() && !S.drag) rects.push(rectOf(badgeEl))
   const key = JSON.stringify(rects.map((r) => [r.x, r.y, r.w, r.h].map(Math.round)))
   if (key === lastRects) return
   lastRects = key
   invoke('set_hit_rects', { rects: rects.map((r) => ({ x: r.x, y: r.y, w: r.w, h: r.h })) })
 }
 
+// Arrastrar: se coge con el ratón y se lleva donde quieras (con su isla)
+petEl.addEventListener('mousedown', (e) => {
+  const homeNow = S.home ?? window.innerWidth - 120 * S.scale
+  S.drag = { px: e.clientX, x0: S.x, home0: homeNow, moved: false }
+})
+window.addEventListener('mousemove', (e) => S.drag && onCursor({ x: e.clientX, y: e.clientY }))
+window.addEventListener('mouseup', () => {
+  if (!S.drag) return
+  const moved = S.drag.moved
+  S.drag = moved ? null : S.drag
+  if (moved) {
+    S.idleUntil = performance.now() + 8000
+    if (S.scene === 'isla') setConfig({ home: Math.round(S.home) })
+    petEl.dataset.dragged = '1'
+  } else S.drag = null
+})
+
 petEl.addEventListener('click', () => {
+  if (petEl.dataset.dragged) {
+    delete petEl.dataset.dragged
+    return
+  }
   if (S.pinned) closeCard()
   else {
     openCard(true)
@@ -597,7 +645,7 @@ if (TAURI) {
     if (S.cardOpen) renderCard()
   })
   TAURI.event.listen('refresh', load)
-} else window.addEventListener('mousemove', (e) => onCursor({ x: e.clientX, y: e.clientY }))
+} else window.addEventListener('mousemove', (e) => !S.drag && onCursor({ x: e.clientX, y: e.clientY }))
 
 // ---------- Bucle ----------
 
