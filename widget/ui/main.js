@@ -191,7 +191,7 @@ function apply(state) {
 
   if (state.visit && (!S.visitor || S.visitor.at !== state.visit.at)) startVisitor(state.visit)
 
-  if (S.cardOpen && !S.game && !cardEl.contains(document.activeElement)) renderCard()
+  if (S.cardOpen && !S.game && !(cardEl.contains(document.activeElement) && document.activeElement.tagName === 'INPUT')) renderCard()
   renderBadge()
   drawYardNow()
 }
@@ -893,7 +893,10 @@ cardEl.addEventListener('click', async (e) => {
   if (set === 'sound') return setConfig({ sound: !S.sound })
   if (set === 'showBadge') return setConfig({ showBadge: !S.showBadge })
   if (set === 'hooks') {
-    await invoke('run_cli', { args: ['avisos', S.state.hooks ? 'no' : 'si'] })
+    const on = !S.state.hooks
+    S.state.hooks = on // se ve al instante
+    renderCard()
+    await invoke('run_cli', { args: ['avisos', on ? 'si' : 'no'] }).catch(() => {})
     return load()
   }
   if (a === 'save-name') return action('nombre', cardEl.querySelector('#in-name')?.value)
@@ -1030,7 +1033,7 @@ function onCursor(p) {
     S.closeTimer = setTimeout(() => S.hover && openCard(), 220)
   } else if (!S.hover && was) {
     clearTimeout(S.closeTimer)
-    S.closeTimer = setTimeout(() => !S.hover && !cardEl.contains(document.activeElement) && closeCard(), S.pinned ? 5000 : 450)
+    S.closeTimer = setTimeout(() => !S.hover && !(cardEl.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') && closeCard(), S.pinned ? 5000 : 450)
   }
 }
 
