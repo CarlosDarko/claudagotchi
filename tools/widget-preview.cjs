@@ -17,7 +17,7 @@ const path = require('node:path')
   }).listen(0)
   const port = srv.address().port
   const b = await chromium.launch()
-  const p = await b.newPage({ viewport: { width: 760, height: 470 }, deviceScaleFactor: 2 })
+  const p = await b.newPage({ viewport: { width: 760, height: 640 }, deviceScaleFactor: 2 })
   await p.addInitScript((m) => { window.__MOCK__ = m }, mock)
   await p.addInitScript(() => {
     document.addEventListener('DOMContentLoaded', () => {
@@ -27,10 +27,9 @@ const path = require('node:path')
   p.on('pageerror', (e) => console.error('ERROR', e.message))
   await p.goto(`http://127.0.0.1:${port}/index.html`)
   await p.waitForTimeout(1500)
-  if (mode === 'hover') {
-    const st = await p.evaluate(() => ({ x: window.__claudagotchi.x }))
-    await p.mouse.move(st.x, 470 - 25)
-    await p.waitForTimeout(700)
+  if (mode && mode !== 'idle') {
+    await p.evaluate((tab) => window.__claudagotchiOpen(tab), mode === 'hover' ? 'mascota' : mode)
+    await p.waitForTimeout(600)
   }
   await p.screenshot({ path: out })
   await b.close()

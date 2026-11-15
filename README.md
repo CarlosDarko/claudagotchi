@@ -2,11 +2,17 @@
 
 Una mascota tipo tamagotchi que vive **en tu escritorio**, en la barra de estado de Claude Code y en tu terminal, y que **se alimenta de tu uso real de Claude**. Cuanto más programas, más come y más crece. Si te pasas, se quema. Si llegas al límite de la sesión, se duerme hasta que se reinicia. Y si llevas horas sin parar, te pide que descanses (y se cura cuando lo haces).
 
-![Tu mascota paseando por el escritorio: al pasar el ratón enseña sus necesidades y tu uso de Claude](docs/img/widget-tarjeta.png)
+![Tu mascota en su isla, encima de la barra de tareas, con la tarjeta abierta](docs/img/widget-tarjeta.png)
 
 ## Instalarlo
 
-### La forma más fácil: pídeselo a Claude Code
+### En Windows: descarga y doble clic
+
+1. Descarga **[Claudagotchi-windows-x64-setup.exe](https://github.com/CarlosDarko/claudagotchi/releases/latest/download/Claudagotchi-windows-x64-setup.exe)**.
+2. Ábrelo con doble clic. Si Windows avisa con 'Windows protegió tu PC', pulsa **Más información → Ejecutar de todas formas** (pasa con cualquier programa nuevo sin firma de pago).
+3. Al terminar se abre sola y queda puesta para **arrancar con el ordenador**. Para verla también en la barra de Claude Code, actívalo en su icono junto al reloj: **Mostrar en Claude Code**.
+
+### La forma más fácil si usas Claude Code: pídeselo
 
 Abre Claude Code y pega esta frase:
 
@@ -53,14 +59,22 @@ La gracia está en que las dos cosas están conectadas: tus tokens son su comida
 
 ### En tu escritorio, sin molestar
 
-La mascota pasea por encima de la barra de tareas, como en los juegos de escritorio tipo Tiny Pasture. Es una ventana transparente y siempre encima, pero **los clics la atraviesan** salvo justo encima de ella, así que puedes seguir trabajando como si no estuviera.
+La mascota vive encima de la barra de tareas, en su islita, como en los juegos de escritorio tipo Tiny Pasture. Es una ventana transparente y siempre encima, pero **los clics la atraviesan** salvo justo encima de ella, así que puedes seguir trabajando como si no estuviera.
 
-- **De un vistazo**: una pastilla sobre su cabeza con el % de tu sesión (o tus tokens de hoy), y un `!` si necesita algo.
-- **Al pasar el ratón**: su tarjeta, con sus necesidades, tu sesión y tu semana, cuándo se reinician y si llegarás al límite.
-- **Con un clic**: los botones para darle de comer, jugar, limpiar, curarla o apagarle la luz.
-- **En el icono junto al reloj**: tamaño (pequeña, mediana o grande), mostrar el % siempre o solo al pasar el ratón, arrancar con el ordenador y salir.
+- **Se come lo que haces con Claude**: cada vez que Claude Code gasta tokens, le caen chispas ✻ naranjas y se las come (con un `+120k` encima).
+- **De un vistazo**: una pastilla sobre su cabeza con la chispa de Claude y el % de tu sesión (o tus tokens de hoy), y un `!` si necesita algo. La chispa gira mientras Claude trabaja.
+- **Al pasar el ratón**: su tarjeta, con tres pestañas:
+  - **Mascota**: sus necesidades, tu Claude Code (qué está haciendo, tu sesión, tu semana, cuándo se reinician y si llegarás al límite) y los botones para cuidarla, con su icono, su nombre y lo que hace cada uno.
+  - **Logros**: 33 medallas, cada una con su dibujo.
+  - **Colección**: las 30 formas adultas que puedes descubrir.
+- **Su escenario**: la casita con la chispa de Claude en el tejado, el cuenco (se vacía cuando tiene hambre), el árbol de tokens (un fruto por cada bocado que te queda) y una farola que se enciende de noche. Se cambia con un clic, en la tarjeta o en el menú: **isla**, **a lo ancho** o **sin escenario**.
+- **En el icono junto al reloj**: tamaño, escenario, mostrar el % siempre, mostrar en la barra de Claude Code, arrancar con el ordenador, vista completa y salir.
 
-![Todas las mascotas tal como pasean por el escritorio](docs/img/mascotas.png)
+| | |
+|---|---|
+| ![Logros](docs/img/widget-logros.png) | ![Colección](docs/img/widget-coleccion.png) |
+
+![Algunas de las mascotas](docs/img/mascotas.png)
 
 ### En la terminal
 
@@ -129,14 +143,14 @@ La mascota pasea por encima de la barra de tareas, como en los juegos de escrito
 
 | Etapa | Cuándo |
 |---|---|
-| 🥚 Huevo | Al empezar. Eclosiona en cuanto come algo y pasan unos minutos |
+| 🥚 Huevo | Al empezar. Se va agrietando mientras usas Claude y eclosiona cuando ha comido 250k tokens (o a las 2 horas) |
 | 🐣 Bebé | Recién nacido |
 | 🐥 Peque | 2M tokens y 12 horas de vida |
 | 🐤 Adolescente | 15M tokens y 2 días |
 | Adulto | 60M tokens y 5 días |
 | 👑 Leyenda | 400M tokens, 3 semanas y un cuidado de diez |
 
-La **forma adulta depende de su dieta**, es decir, del modelo con el que más programas:
+Las crías salen cada una de un color. La **forma adulta** sale de **cómo usas Claude**: la especie, del modelo con el que más programas, y el oficio, de las herramientas que más usa Claude contigo mientras crece. 5 especies por 6 oficios son **30 formas adultas** para coleccionar.
 
 | Forma | Dieta |
 |---|---|
@@ -146,7 +160,16 @@ La **forma adulta depende de su dieta**, es decir, del modelo con el que más pr
 | 🧙 Fabulín | Sobre todo Fable. Sombrero de mago |
 | 🦄 Quimerilla | Dieta variada. Un cuerno y una aleta |
 
-Y la **variante depende de cómo lo hayas cuidado**: **brillante** si casi siempre estuvo bien atendido, **gruñón** si no, normal en medio.
+| Oficio | Si Claude sobre todo... | Lleva |
+|---|---|---|
+| Constructor | edita y escribe código | casco y martillo |
+| Explorador | lee y busca por el proyecto | sombrero y lupa |
+| Hacker | lanza comandos en la terminal | auriculares |
+| Sabio | busca en la web | gafas y libro |
+| Director | delega en subagentes | pajarita y batuta |
+| Equilibrado | hace un poco de todo | bufanda |
+
+Y la **variante depende de cómo lo hayas cuidado**: **brillante** si casi siempre estuvo bien atendido, **gruñón** si no, normal en medio. Si programas sobre todo de madrugada, sale **nocturno**, con estrellitas.
 
 ### Lo que dice
 

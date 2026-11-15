@@ -18,7 +18,7 @@ use tauri::tray::TrayIconBuilder;
 use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, WebviewWindow};
 use tauri_plugin_autostart::ManagerExt;
 
-const WINDOW_H: f64 = 470.0; // alto lógico: cabe la tarjeta encima de la mascota
+const WINDOW_H: f64 = 640.0; // alto lógico: cabe la tarjeta encima de la mascota
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 struct Rect {
@@ -84,6 +84,14 @@ async fn do_action(name: String, arg: Option<String>) -> Result<String, String> 
 #[tauri::command]
 fn set_hit_rects(rects: Vec<Rect>, state: tauri::State<HitRects>) {
     *state.0.lock().unwrap() = rects;
+}
+
+#[tauri::command]
+async fn set_config(app: AppHandle, patch: String) -> Result<String, String> {
+    let value: serde_json::Value = serde_json::from_str(&patch).map_err(|e| e.to_string())?;
+    let out = tauri::async_runtime::spawn_blocking(move || run(&["widget-config", &patch])).await.map_err(|e| e.to_string())??;
+    sync_menu(&app, &value);
+    Ok(out)
 }
 
 #[tauri::command]
@@ -171,11 +179,38 @@ fn label(menu: &serde_json::Value, key: &str, fallback: &str) -> String {
     menu.get(key).and_then(|v| v.as_str()).unwrap_or(fallback).to_string()
 }
 
+// Las opciones que se pueden cambiar también desde la tarjeta: el menú se mantiene al día
+struct MenuItems {
+    scales: Vec<(CheckMenuItem<tauri::Wry>, i64)>,
+    scenes: Vec<(CheckMenuItem<tauri::Wry>, String)>,
+    badge: CheckMenuItem<tauri::Wry>,
+}
+
+fn sync_menu(app: &AppHandle, v: &serde_json::Value) {
+    let Some(items) = app.try_state::<MenuItems>() else { return };
+    if let Some(n) = v.get("scale").and_then(|x| x.as_i64()) {
+        for (item, k) in &items.scales {
+            let _ = item.set_checked(*k == n);
+        }
+    }
+    if let Some(sc) = v.get("scene").and_then(|x| x.as_str()) {
+        for (item, k) in &items.scenes {
+            let _ = item.set_checked(k == sc);
+        }
+    }
+    if let Some(b) = v.get("showBadge").and_then(|x| x.as_bool()) {
+        let _ = items.badge.set_checked(b);
+    }
+}
+
 fn build_tray(app: &AppHandle, state: &serde_json::Value) -> tauri::Result<()> {
     let menu_t = state.get("menu").cloned().unwrap_or_default();
+    let scenes_t = state.get("escenarios").cloned().unwrap_or_default();
     let widget = state.get("widget").cloned().unwrap_or_default();
     let scale = widget.get("scale").and_then(|v| v.as_f64()).unwrap_or(2.0) as i64;
+    let scene = widget.get("scene").and_then(|v| v.as_str()).unwrap_or("isla").to_string();
     let badge = widget.get("showBadge").and_then(|v| v.as_bool()).unwrap_or(true);
+    let statusline = state.get("statusline").and_then(|v| v.as_bool()).unwrap_or(false);
     let autostart = app.autolaunch().is_enabled().unwrap_or(false);
 
     let toggle = MenuItem::with_id(app, "toggle", label(&menu_t, "ocultar", "Ocultar mascota"), true, None::<&str>)?;
@@ -183,24 +218,39 @@ fn build_tray(app: &AppHandle, state: &serde_json::Value) -> tauri::Result<()> {
     let s3 = CheckMenuItem::with_id(app, "scale3", label(&menu_t, "mediana", "Mediana"), true, scale == 3, None::<&str>)?;
     let s4 = CheckMenuItem::with_id(app, "scale4", label(&menu_t, "grande", "Grande"), true, scale == 4, None::<&str>)?;
     let size = Submenu::with_items(app, label(&menu_t, "tamano", "Tamaño"), true, &[&s2, &s3, &s4])?;
+    let sc_isla = CheckMenuItem::with_id(app, "scene:isla", label(&scenes_t, "isla", "Isla"), true, scene == "isla", None::<&str>)?;
+    let sc_comp = CheckMenuItem::with_id(app, "scene:completo", label(&scenes_t, "completo", "A lo ancho"), true, scene == "completo", None::<&str>)?;
+    let sc_no = CheckMenuItem::with_id(app, "scene:no", label(&scenes_t, "no", "Sin escenario"), true, scene == "no", None::<&str>)?;
+    let scene_m = Submenu::with_items(app, label(&menu_t, "escenario", "Escenario"), true, &[&sc_isla, &sc_comp, &sc_no])?;
     let badge_i = CheckMenuItem::with_id(app, "badge", label(&menu_t, "porcentaje", "Mostrar el % siempre"), true, badge, None::<&str>)?;
+    let sl_i = CheckMenuItem::with_id(app, "statusline", label(&menu_t, "statusline", "Mostrar en Claude Code"), true, statusline, None::<&str>)?;
     let auto_i = CheckMenuItem::with_id(app, "autostart", label(&menu_t, "arrancar", "Arrancar con el ordenador"), true, autostart, None::<&str>)?;
     let full = MenuItem::with_id(app, "full", label(&menu_t, "completa", "Abrir vista completa"), true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", label(&menu_t, "salir", "Salir"), true, None::<&str>)?;
     let sep = PredefinedMenuItem::separator(app)?;
     let sep2 = PredefinedMenuItem::separator(app)?;
-    let menu = Menu::with_items(app, &[&toggle, &sep, &size, &badge_i, &auto_i, &sep2, &full, &quit])?;
+    let menu = Menu::with_items(app, &[&toggle, &sep, &size, &scene_m, &badge_i, &sl_i, &auto_i, &sep2, &full, &quit])?;
+
+    app.manage(MenuItems {
+        scales: vec![(s2.clone(), 2), (s3.clone(), 3), (s4.clone(), 4)],
+        scenes: vec![(sc_isla.clone(), "isla".into()), (sc_comp.clone(), "completo".into()), (sc_no.clone(), "no".into())],
+        badge: badge_i.clone(),
+    });
 
     let (shown, hidden) = (label(&menu_t, "ocultar", "Ocultar mascota"), label(&menu_t, "mostrar", "Mostrar mascota"));
-    let scales = [(s2.clone(), 2), (s3.clone(), 3), (s4.clone(), 4)];
     TrayIconBuilder::with_id("main")
         .icon(app.default_window_icon().cloned().expect("icono"))
         .tooltip("Claudagotchi")
         .menu(&menu)
         .show_menu_on_left_click(true)
         .on_menu_event(move |app, ev| {
-            let id = ev.id().as_ref();
-            match id {
+            let id = ev.id().as_ref().to_string();
+            let apply = |app: &AppHandle, patch: serde_json::Value| {
+                widget_config(patch.clone());
+                sync_menu(app, &patch);
+                let _ = app.emit("config", patch);
+            };
+            match id.as_str() {
                 "toggle" => {
                     if let Some(w) = app.get_webview_window("main") {
                         let visible = w.is_visible().unwrap_or(true);
@@ -210,16 +260,13 @@ fn build_tray(app: &AppHandle, state: &serde_json::Value) -> tauri::Result<()> {
                 }
                 "scale2" | "scale3" | "scale4" => {
                     let n: i64 = id[5..].parse().unwrap_or(2);
-                    for (item, v) in &scales {
-                        let _ = item.set_checked(*v == n);
-                    }
-                    widget_config(serde_json::json!({ "scale": n }));
-                    let _ = app.emit("config", serde_json::json!({ "scale": n }));
+                    apply(app, serde_json::json!({ "scale": n }));
                 }
-                "badge" => {
-                    let on = badge_i.is_checked().unwrap_or(true);
-                    widget_config(serde_json::json!({ "showBadge": on }));
-                    let _ = app.emit("config", serde_json::json!({ "showBadge": on }));
+                s if s.starts_with("scene:") => apply(app, serde_json::json!({ "scene": &s[6..] })),
+                "badge" => apply(app, serde_json::json!({ "showBadge": badge_i.is_checked().unwrap_or(true) })),
+                "statusline" => {
+                    let on = sl_i.is_checked().unwrap_or(false);
+                    let _ = run(&[if on { "instalar" } else { "desinstalar" }]);
                 }
                 "autostart" => {
                     let al = app.autolaunch();
@@ -244,7 +291,7 @@ fn main() {
         }))
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .manage(HitRects::default())
-        .invoke_handler(tauri::generate_handler![get_state, do_action, set_hit_rects, open_full])
+        .invoke_handler(tauri::generate_handler![get_state, do_action, set_hit_rects, set_config, open_full])
         .setup(|app| {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory); // sin icono en el Dock

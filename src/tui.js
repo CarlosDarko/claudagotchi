@@ -1,7 +1,7 @@
 // La interfaz animada: la mascota en su habitación, sus necesidades, tu uso real
 // de Claude y las teclas para cuidarla.
 import { refresh, doAction, newEgg, loadConfig, saveConfig } from './store.js'
-import { act, mood, MOOD_LABEL, STAGE_LABEL, FORM_LABEL, latestEvent, ACHIEVEMENT_IDS, achievementText } from './pet.js'
+import { act, mood, MOOD_LABEL, STAGE_LABEL, FORM_LABEL, formLabel, latestEvent, ACHIEVEMENT_IDS, achievementText } from './pet.js'
 import { drawScene } from './sprites.js'
 import { canvasToAnsi, paint, dim, bold, bar, bg, padEnd, truncate, wrap, visibleWidth, RESET } from './render.js'
 import { lastDays, sumBy, burnRate, isWorking, toolKind } from './logs.js'
@@ -251,7 +251,7 @@ function rightCards(ui, pet, index, limits, now, w, matchH) {
 }
 
 function header(ui, pet, now, W) {
-  const what = pet.stage === 'adulto' || pet.stage === 'leyenda' ? `${FORM_LABEL[pet.form] || ''}${tmap('variant')[pet.variant] || ''}` : STAGE_LABEL[pet.stage]
+  const what = formLabel(pet)
   const bits = [what]
   if (pet.alive) bits.push(fmtDuration(now - pet.born))
   if (pet.generation > 1) bits.push(t('ui.genN', { n: pet.generation }))
@@ -545,7 +545,7 @@ export function albumView(pet, W) {
   const lines = []
   if (!pet.graveyard.length) lines.push('', center(dim(t('ui.albumVacio')), w - 4), '')
   for (const g of [...pet.graveyard].reverse()) {
-    const stage = g.stage === 'adulto' || g.stage === 'leyenda' ? FORM_LABEL[g.form] || STAGE_LABEL[g.stage] : STAGE_LABEL[g.stage]
+    const stage = formLabel(g)
     lines.push(`${g.retired ? '🏡' : '☁️'} ${bold(paint(TEXT, g.name))}  ${dim(t('ui.albumFila', { gen: g.generation, stage, dur: fmtDuration(g.died - g.born), tokens: fmtTokens(g.xp) }))}`)
   }
   return card(lines, w, { title: t('ui.album') }).map((l) => `  ${l}`)

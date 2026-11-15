@@ -14,10 +14,18 @@ function feed(index, food, model = 'opus') {
 function hatched(now = T0) {
   const idx = emptyIndex()
   const p = newPet({ now, index: idx, name: 'Test' })
-  feed(idx, 1000)
-  tick(p, { index: idx, now: now + 10 * 60_000 })
-  return { p, idx, now: now + 10 * 60_000 }
+  feed(idx, 300_000)
+  tick(p, { index: idx, now: now + 20 * 60_000 })
+  return { p, idx, now: now + 20 * 60_000 }
 }
+
+test('el huevo no eclosiona con poco: necesita tokens y un rato', () => {
+  const idx = emptyIndex()
+  const p = newPet({ now: T0, index: idx })
+  feed(idx, 1000)
+  tick(p, { index: idx, now: T0 + 20 * 60_000 })
+  assert.equal(p.stage, 'huevo')
+})
 
 test('el huevo eclosiona cuando come y pasan unos minutos', () => {
   const { p } = hatched()
@@ -114,6 +122,8 @@ test('evoluciona por tokens y edad, y la forma adulta sale de su dieta', () => {
     assert.equal(p.stage, stage)
   }
   assert.equal(p.form, 'sonnet')
+  assert.equal(p.style, 'equilibrado')
+  assert.ok(Object.keys(p.collection).includes('sonnet-equilibrado'))
   assert.ok(['brillante', 'normal', 'grunon'].includes(p.variant))
 })
 
@@ -140,4 +150,22 @@ test('las acciones gastan bocados y respetan los límites', () => {
 test('un huevo no se puede alimentar a mano', () => {
   const p = newPet({ now: T0, index: emptyIndex() })
   assert.equal(act(p, 'comer', T0).ok, false)
+})
+
+test('el oficio sale de las herramientas que usa Claude', async () => {
+  const { dominantStyle, formLabel } = await import('../src/pet.js')
+  assert.equal(dominantStyle({ obras: 80, explorador: 30, hacker: 10 }), 'obras')
+  assert.equal(dominantStyle({ obras: 30, explorador: 30, hacker: 30, sabio: 30 }), 'equilibrado')
+  assert.equal(dominantStyle({ hacker: 3 }), 'equilibrado')
+  assert.equal(formLabel({ stage: 'adulto', form: 'opus', style: 'hacker', variant: 'brillante' }), 'Opusaurio hacker brillante')
+})
+
+test('cuenta las herramientas de Claude durante su vida', () => {
+  const { p, idx, now } = hatched()
+  idx.totals.tools = { obras: 40, hacker: 2 }
+  tick(p, { index: idx, now: now + 1000 })
+  idx.totals.tools = { obras: 140, hacker: 12 }
+  tick(p, { index: idx, now: now + 2000 })
+  assert.equal(p.styles.obras, 140)
+  assert.equal(p.styles.hacker, 12)
 })

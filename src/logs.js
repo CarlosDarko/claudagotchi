@@ -9,7 +9,7 @@ import { dayKey, modelFamily, projectName } from './util.js'
 const KEEP_DAYS = 60
 const RECENT_MS = 8 * 3600_000
 const BREAK_MS = 15 * 60_000
-const VERSION = 2
+const VERSION = 3
 
 export function emptyIndex() {
   return {
@@ -17,7 +17,7 @@ export function emptyIndex() {
     files: {},
     days: {},
     recent: [],
-    totals: { tokens: 0, food: 0, models: {} },
+    totals: { tokens: 0, food: 0, models: {}, tools: {} },
     lastActivity: 0,
     lastTool: null,
     workStart: 0,
@@ -51,6 +51,16 @@ const TOOL_KIND = {
   NotebookEdit: 'editando', Bash: 'ejecutando', WebFetch: 'investigando', WebSearch: 'investigando',
   Task: 'delegando', Agent: 'delegando', TodoWrite: 'planificando', ExitPlanMode: 'planificando',
 }
+// Estilo de trabajo según la herramienta: decide el oficio de la mascota adulta
+const TOOL_STYLE = {
+  Edit: 'obras', Write: 'obras', MultiEdit: 'obras', NotebookEdit: 'obras',
+  Read: 'explorador', Grep: 'explorador', Glob: 'explorador', LS: 'explorador',
+  Bash: 'hacker', BashOutput: 'hacker', KillShell: 'hacker',
+  WebFetch: 'sabio', WebSearch: 'sabio',
+  Task: 'director', Agent: 'director',
+}
+export const toolStyle = (name) => TOOL_STYLE[name] || null
+
 export const toolKind = (name) => TOOL_KIND[name] || (name?.startsWith('mcp__') ? 'herramientas' : name ? 'trabajando' : null)
 
 // Procesa una línea ya parseada. Exportada para los tests.
@@ -65,9 +75,20 @@ export function ingest(index, entry, folder, seen) {
   }
   if (entry.type !== 'assistant') return
   const msg = entry.message || {}
-  if (Array.isArray(msg.content)) {
-    const tool = msg.content.findLast?.((c) => c.type === 'tool_use')
-    if (tool && ts >= index.lastActivity) index.lastTool = tool.name
+  const tools = Array.isArray(msg.content) ? msg.content.filter((c) => c.type === 'tool_use') : []
+  if (tools.length && ts >= index.lastActivity) index.lastTool = tools[tools.length - 1].name
+  // Las herramientas se cuentan por bloque (cada una tiene su id propio)
+  for (const tu of tools) {
+    const key = `t:${tu.id || ''}`
+    if (tu.id && seen.has(key)) continue
+    if (tu.id) seen.add(key)
+    const st = toolStyle(tu.name)
+    if (st) {
+      index.totals.tools[st] = (index.totals.tools[st] || 0) + 1
+      const dd = day(index, dayKey(ts))
+      dd.tools = dd.tools || {}
+      dd.tools[st] = (dd.tools[st] || 0) + 1
+    }
   }
   const u = msg.usage
   if (!u) return
@@ -135,7 +156,7 @@ export function scan({ dir = PROJECTS_DIR, index = null, save = true, now = Date
         ingest(state, entry, folder, seen)
       }
       rec.offset += lastNl + 1
-      rec.ids = [...seen].slice(-64)
+      rec.ids = [...seen].slice(-160)
       state.files[file] = rec
       changed = true
     } finally {

@@ -23,18 +23,20 @@ export const RULES = {
   medCooldownMin: 120,
   petCooldownMin: 20,
   evolve: {
-    bebe: { xp: 0, ageH: 0.05 },
+    bebe: { xp: 250_000, ageH: 0.25 }, // el huevo necesita calor (tokens) y un rato
     nino: { xp: 2e6, ageH: 12 },
     teen: { xp: 15e6, ageH: 48 },
     adulto: { xp: 60e6, ageH: 120 },
     leyenda: { xp: 400e6, ageH: 504, care: 0.75 },
   },
-  hatchWithoutFoodH: 0.5,
+  hatchWithoutFoodH: 2,
+  styleMin: 0.34, // un oficio necesita al menos un tercio de las herramientas
 }
 
 
-export function newPet({ now = Date.now(), index = null, name = null, generation = 1, graveyard = [], achievements = {} } = {}) {
+export function newPet({ now = Date.now(), index = null, name = null, generation = 1, graveyard = [], achievements = {}, collection = {} } = {}) {
   return {
+    collection,
     v: 1,
     name: name || t('names', {}, hashStr(String(now))),
     seed: hashStr(`${now}`) % 1000,
@@ -49,7 +51,14 @@ export function newPet({ now = Date.now(), index = null, name = null, generation
     lights: true,
     xp: 0,
     diet: {},
-    baseline: { food: index?.totals.food ?? 0, models: { ...(index?.totals.models || {}) } },
+    baseline: { food: index?.totals.food ?? 0, models: { ...(index?.totals.models || {}) }, tools: { ...(index?.totals.tools || {}) } },
+    styles: {},
+    style: null,
+    night: false,
+    dayFood: 0,
+    nightFood: 0,
+    resets: 0,
+    goodStreakH: 0,
     bocados: 5,
     poopAcc: 0,
     awakeSincePoopH: 0,
@@ -79,7 +88,14 @@ function unlock(state, id, now) {
   say(state, t('ev.logro', achievementText(id)), 'logro', now)
 }
 
-export const ACHIEVEMENT_IDS = ['eclosion', 'primer-bocado', 'nino', 'teen', 'adulto', 'leyenda', 'millon', 'racha-7', 'racha-30', 'limpito', 'jugon', 'zen', 'superviviente', 'noctambulo', 'madrugador', 'al-limite', 'reencarnacion']
+export const ACHIEVEMENT_IDS = [
+  'eclosion', 'primer-bocado', 'nino', 'teen', 'adulto', 'leyenda',
+  'millon', 'cien-millones', 'mil-millones', 'racha-7', 'racha-30', 'finde',
+  'manos-a-la-obra', 'explorador', 'hacker', 'sabio', 'director', 'politoglota',
+  'limpito', 'chef', 'achuchable', 'jugon', 'zen', 'superviviente', 'dia-perfecto',
+  'noctambulo', 'madrugador', 'al-limite', 'fenix',
+  'coleccion-3', 'coleccion-10', 'reencarnacion', 'dinastia',
+]
 export const achievementText = (id) => {
   const [name, desc] = tmap('ach')[id] || [id, '']
   return { id, name, desc }
@@ -96,7 +112,20 @@ function sessionPct(limits, now) {
 
 // ---------- El tick ----------
 
+// Mascotas guardadas con versiones anteriores: rellena lo que falte
+function ensure(s) {
+  s.styles ??= {}
+  s.collection ??= {}
+  s.dayFood ??= 0
+  s.nightFood ??= 0
+  s.resets ??= 0
+  s.goodStreakH ??= 0
+  s.baseline.tools ??= null
+  return s
+}
+
 export function tick(state, { index, limits = null, now = Date.now() }) {
+  ensure(state)
   if (!state.alive) return state
   const s = state
   dailyCheck(s, index, now)
@@ -110,7 +139,15 @@ export function tick(state, { index, limits = null, now = Date.now() }) {
     const d = v - (s.baseline.models[fam] || 0)
     if (d > 0) newByModel[fam] = d
   }
-  s.baseline = { food, models: { ...(index.totals.models || {}) } }
+  const tools = index.totals.tools || {}
+  if (s.baseline.tools) {
+    for (const [k, v] of Object.entries(tools)) {
+      const d = v - (s.baseline.tools[k] || 0)
+      if (d > 0 && d < 5000) s.styles[k] = (s.styles[k] || 0) + d
+    }
+  }
+  s.baseline = { food, models: { ...(index.totals.models || {}) }, tools: { ...tools } }
+  toolAchievements(s, now)
 
   const elapsedMs = Math.max(0, now - s.lastTick)
   const cappedMs = Math.min(elapsedMs, RULES.maxCatchUpH * 3600_000)
@@ -150,7 +187,12 @@ function eat(s, newFood, byModel, now) {
   st.hambre = clamp(st.hambre + points)
   const overflow = Math.max(0, before + points - 100)
   s.xp += newFood
+  const h = new Date(now).getHours()
+  if (h >= 23 || h < 6) s.nightFood += newFood
+  else s.dayFood += newFood
   for (const [k, v] of Object.entries(byModel)) s.diet[k] = (s.diet[k] || 0) + v
+  if (s.xp >= 100e6) unlock(s, 'cien-millones', now)
+  if (s.xp >= 1e9) unlock(s, 'mil-millones', now)
   // Bocados: moneda para darle de comer a mano. Se ganan programando.
   s.tokenBank = (s.tokenBank || 0) + newFood + overflow * RULES.foodPerPoint * 0.5
   const earned = Math.floor(s.tokenBank / RULES.tokensPerBocado)
@@ -212,7 +254,11 @@ function step(s, h, { working, pct, weekPct, index, now }) {
   }
 
   s.care.totalH += h
-  if (st.hambre >= 40 && st.felicidad >= 40 && st.higiene >= 40 && st.salud >= 40) s.care.goodH += h
+  if (st.hambre >= 40 && st.felicidad >= 40 && st.higiene >= 40 && st.salud >= 40) {
+    s.care.goodH += h
+    s.goodStreakH += h
+    if (s.goodStreakH >= 24) unlock(s, 'dia-perfecto', now)
+  } else s.goodStreakH = 0
 
   if (st.salud <= 0) die(s, now)
 }
@@ -225,7 +271,7 @@ function die(s, now) {
   s.alive = false
   s.stage = 'nube'
   s.diedAt = now
-  s.graveyard.push({ name: s.name, born: s.born, died: now, stage: s.prevStage || 'bebe', form: s.form, xp: s.xp, generation: s.generation })
+  s.graveyard.push({ name: s.name, born: s.born, died: now, stage: s.prevStage || 'bebe', form: s.form, style: s.style, xp: s.xp, generation: s.generation })
   say(s, t('ev.muerte', { name: s.name }), 'muerte', now)
 }
 
@@ -257,6 +303,9 @@ function dailyCheck(s, index, now) {
   if (s.streak.days >= 30) unlock(s, 'racha-30', now)
   s.bocados = Math.min(99, s.bocados + 2)
   const y = index.days[yesterday]
+  if (y && Object.keys(y.models || {}).length >= 3) unlock(s, 'politoglota', now)
+  const dow = new Date(now - 86400_000).getDay()
+  if (dow === 0 && (y?.food || 0) > 0 && (index.days[dayKey(now - 2 * 86400_000)]?.food || 0) > 0) unlock(s, 'finde', now)
   const hour = new Date(now).getHours()
   const hello = t(hour < 5 ? 'ev.hola.noche' : hour < 13 ? 'ev.hola.manana' : hour < 20 ? 'ev.hola.tarde' : 'ev.hola.cena')
   const extra = y?.tokens ? t('ev.hola.ayer', { tokens: fmtTokens(y.food) }) : t('ev.hola.ayer0')
@@ -271,6 +320,8 @@ function limitEvents(s, limits, pct, now) {
   // Detectamos el reinicio de la ventana: bajó mucho el %, o cambió la hora de reinicio
   if (L.lastSession != null && L.lastSession - pct >= 25 && L.lastSession >= 50) {
     say(s, t('ev.ventana'), 'feliz', now)
+    s.resets += 1
+    if (s.resets >= 10) unlock(s, 'fenix', now)
     s.stats.felicidad = clamp(s.stats.felicidad + 10)
     L.fireWarned = false
   }
@@ -328,6 +379,34 @@ export function dominantForm(diet) {
   return fam
 }
 
+export const STYLES = ['obras', 'explorador', 'hacker', 'sabio', 'director', 'equilibrado']
+export const SPECIES = ['opus', 'sonnet', 'haiku', 'fable', 'mixto']
+
+export function dominantStyle(styles) {
+  const total = Object.values(styles || {}).reduce((a, b) => a + b, 0)
+  if (total < 20) return 'equilibrado'
+  const [k, v] = Object.entries(styles).sort((a, b) => b[1] - a[1])[0]
+  return v / total >= RULES.styleMin && STYLES.includes(k) ? k : 'equilibrado'
+}
+
+export const collectionKey = (p) => `${p.form || 'mixto'}-${p.style || 'equilibrado'}`
+
+// Nombre completo de un adulto: especie, oficio y variante ("Opusaurio constructor brillante")
+export function formLabel(p) {
+  if (p.stage !== 'adulto' && p.stage !== 'leyenda') return STAGE_LABEL[p.stage]
+  const style = tmap('style')[p.style || 'equilibrado'] || ''
+  return `${FORM_LABEL[p.form] || FORM_LABEL.mixto}${style ? ` ${style}` : ''}${tmap('variant')[p.variant] || ''}${p.night ? tmap('variant').noche : ''}`
+}
+
+function toolAchievements(s, now) {
+  const T = s.styles
+  if ((T.obras || 0) >= 1000) unlock(s, 'manos-a-la-obra', now)
+  if ((T.explorador || 0) >= 1000) unlock(s, 'explorador', now)
+  if ((T.hacker || 0) >= 500) unlock(s, 'hacker', now)
+  if ((T.sabio || 0) >= 100) unlock(s, 'sabio', now)
+  if ((T.director || 0) >= 25) unlock(s, 'director', now)
+}
+
 function evolve(s, now) {
   if (!s.alive) return
   const age = ageH(s, now)
@@ -336,7 +415,7 @@ function evolve(s, now) {
   if (!next) return
   const r = E[next]
   let ok
-  if (s.stage === 'huevo') ok = age >= r.ageH && (s.xp > 0 || age >= RULES.hatchWithoutFoodH)
+  if (s.stage === 'huevo') ok = (age >= r.ageH && s.xp >= r.xp) || age >= RULES.hatchWithoutFoodH
   else ok = s.xp >= r.xp && age >= r.ageH && (r.care == null || careScore(s) >= r.care)
   if (!ok) return
   s.prevStage = s.stage
@@ -348,11 +427,20 @@ function evolve(s, now) {
   }
   if (next === 'adulto') {
     s.form = dominantForm(s.diet)
+    s.style = dominantStyle(s.styles)
+    s.night = s.nightFood > s.dayFood * 0.6
     const c = careScore(s)
     s.variant = c >= 0.7 && s.care.mistakes <= 3 ? 'brillante' : c < 0.35 ? 'grunon' : 'normal'
   }
   unlock(s, next, now)
-  const label = next === 'adulto' ? FORM_LABEL[s.form] + tmap('variant')[s.variant] : STAGE_LABEL[next]
+  if (next === 'adulto' || next === 'leyenda') {
+    const key = collectionKey(s)
+    if (!s.collection[key]) s.collection[key] = now
+    const n = Object.keys(s.collection).length
+    if (n >= 3) unlock(s, 'coleccion-3', now)
+    if (n >= 10) unlock(s, 'coleccion-10', now)
+  }
+  const label = next === 'adulto' ? formLabel(s) : STAGE_LABEL[next]
   say(s, t('ev.evoluciona', { name: s.name, label }), 'evolucion', now)
 }
 
@@ -381,6 +469,7 @@ export function act(s, action, now = Date.now(), arg = null) {
       st.hambre = clamp(st.hambre + 25)
       st.felicidad = clamp(st.felicidad + 3)
       s.care.feeds += 1
+      if (s.care.feeds >= 50) unlock(s, 'chef', now)
       return done(t('act.comer', {}, now / 1000))
     }
     case 'chuche': {
@@ -418,6 +507,7 @@ export function act(s, action, now = Date.now(), arg = null) {
       const wait = cooldown(s, 'pet', RULES.petCooldownMin, now)
       st.felicidad = clamp(st.felicidad + (wait ? 1 : 8))
       s.care.pets += 1
+      if (s.care.pets >= 50) unlock(s, 'achuchable', now)
       return done(wait ? t('act.cosquillas') : t('act.caricia'))
     }
     case 'jugar': {
@@ -446,9 +536,10 @@ export function act(s, action, now = Date.now(), arg = null) {
 
 export function reincarnate(old, { now = Date.now(), index = null, name = null } = {}) {
   const graveyard = old ? [...old.graveyard] : []
-  if (old?.alive) graveyard.push({ name: old.name, born: old.born, died: now, stage: old.stage, form: old.form, xp: old.xp, generation: old.generation, retired: true })
-  const p = newPet({ now, index, name, generation: (old?.generation || 0) + 1, graveyard, achievements: old?.achievements || {} })
+  if (old?.alive) graveyard.push({ name: old.name, born: old.born, died: now, stage: old.stage, form: old.form, style: old.style, xp: old.xp, generation: old.generation, retired: true })
+  const p = newPet({ now, index, name, generation: (old?.generation || 0) + 1, graveyard, achievements: old?.achievements || {}, collection: old?.collection || {} })
   if (old) unlock(p, 'reencarnacion', now)
+  if (p.generation >= 3) unlock(p, 'dinastia', now)
   say(p, t('ev.huevo', { gen: p.generation, name: p.name }), 'evolucion', now)
   return p
 }

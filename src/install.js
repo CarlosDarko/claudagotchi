@@ -47,3 +47,7 @@ export function uninstall() {
   writeJSON(file, settings, true)
   return t('cli.desinstalado')
 }
+
+export function isInstalled() {
+  return isOurs(readJSON(settingsFile(), {}).statusLine)
+}

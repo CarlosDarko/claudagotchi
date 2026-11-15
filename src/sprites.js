@@ -162,9 +162,13 @@ const CHEEK = '#FF8FA3'
 const GOLD = ramp('#F7C744')
 const CREAM = ramp('#F3E6C4')
 
+// Cada cría sale de un color según su semilla
+export const BABY_HUES = ['#E8845E', '#F2A07B', '#6CCB9F', '#B48CF0', '#6BB8F0', '#E8C64A', '#F28FB0']
+
 export function paletteFor(pet, mood) {
-  const key = pet.stage === 'adulto' || pet.stage === 'leyenda' ? pet.form || 'mixto' : 'coral'
-  let base = BASE[key] || BASE.coral
+  const adult = pet.stage === 'adulto' || pet.stage === 'leyenda'
+  let base = adult ? BASE[pet.form || 'mixto'] || BASE.mixto : BABY_HUES[(pet.seed ?? 0) % BABY_HUES.length]
+  if (adult && pet.night) base = mix(desaturate(base, 0.15), '#2E2A6B', 0.28)
   if (pet.variant === 'grunon') base = desaturate(base, 0.45)
   if (mood === 'enfermo') base = mix(desaturate(base, 0.4), '#9CC48A', 0.35)
   const R = ramp(base)
@@ -423,6 +427,80 @@ function extras(c, form, cx, cy, b, R, frame, back) {
   }
 }
 
+// Accesorios del oficio (cómo trabaja con Claude). Van encima del cuerpo.
+function styleGear(c, style, form, cx, cy, b, frame, front) {
+  const top = Math.round(cy - b.ry)
+  const hx = Math.round(cx + b.rx + 1), hy = Math.round(cy + b.ry * 0.2) // mano derecha
+  const hatOk = form !== 'fable'
+  if (!front) return
+  switch (style) {
+    case 'obras': {
+      const Y = ramp('#F2C230')
+      if (hatOk) {
+        for (let j = 0; j < 4; j++) {
+          const w = [7, 9, 9, 13][j]
+          for (let i = 0; i < w; i++) c.set(Math.round(cx) - Math.floor(w / 2) + i, top - 2 + j - 1, j === 3 ? Y.shade : i < 2 ? Y.light : i > w - 3 ? Y.shade : Y.base)
+        }
+        c.set(Math.round(cx), top - 3, Y.high)
+      }
+      // Martillo
+      c.stamp(hx - 1, hy - 5, ['ggg', 'ggg', '.w.', '.w.', '.w.'], { g: '#8E98A8', w: '#9B6B4A' })
+      break
+    }
+    case 'explorador': {
+      const K = ramp('#C9A86A')
+      if (hatOk) {
+        for (let i = -7; i <= 7; i++) c.set(Math.round(cx) + i, top, Math.abs(i) > 5 ? K.shade : K.base)
+        for (let j = 1; j <= 3; j++) for (let i = -4; i <= 4; i++) c.set(Math.round(cx) + i, top - j, i < -2 ? K.light : j === 1 ? '#7A4E2C' : K.base)
+      }
+      // Lupa
+      c.stamp(hx - 1, hy - 6, ['.ooo.', 'oWbbo', 'obbbo', '.ooo.', '...h.', '....h'], { o: '#5A6178', W: '#FFFFFF', b: '#9FD8FF', h: '#9B6B4A' })
+      break
+    }
+    case 'hacker': {
+      // Auriculares con luz verde
+      const H = ramp('#3A3F52')
+      for (let i = -6; i <= 6; i++) {
+        const y = top - 1 + Math.round((i * i) / 14)
+        c.set(Math.round(cx) + i, y, Math.abs(i) < 2 ? H.light : H.base)
+      }
+      for (const side of [-1, 1]) {
+        const ex = Math.round(cx + side * (b.rx - 0.5))
+        c.rect(ex - 1, Math.round(cy - b.ry * 0.35), 3, 4, H.deep)
+        c.set(ex, Math.round(cy - b.ry * 0.35) + 1, frame % 6 < 3 ? '#5FD38D' : '#2F8F55')
+      }
+      break
+    }
+    case 'sabio': {
+      // Gafas redondas y un libro
+      const ey = Math.round(cy + b.eyeDy - 1)
+      for (const side of [-1, 1]) {
+        const gx = Math.round(cx + side * b.eyeDx)
+        c.stamp(gx - 3, ey - 1, ['.ggg.', 'g...g', 'g...g', '.ggg.'], { g: '#3B2A22' })
+      }
+      c.set(Math.round(cx), ey, '#3B2A22')
+      c.stamp(hx - 2, hy - 3, ['rrrr', 'rppr', 'rppr', 'rrrr'], { r: '#B5523F', p: '#F3E6C4' })
+      break
+    }
+    case 'director': {
+      // Pajarita y batuta
+      const by = Math.round(cy + b.ry * 0.58)
+      c.stamp(Math.round(cx) - 3, by, ['rr.rr', 'rrrrr', 'rr.rr'], { r: '#D9404F' })
+      c.set(Math.round(cx), by + 1, '#8E2A35')
+      const up = frame % 4 < 2
+      c.stamp(hx, hy - 6, up ? ['w...', '.w..', '..w.', '...b'] : ['....', 'ww..', '..ww', '...b'], { w: '#FFFFFF', b: '#3A3F52' })
+      break
+    }
+    case 'equilibrado': {
+      // Bufanda coral
+      const sy = Math.round(cy + b.ry * 0.6)
+      for (let i = -5; i <= 5; i++) c.set(Math.round(cx) + i, sy, i % 2 ? '#E07A55' : '#F2A07B')
+      c.stamp(Math.round(cx) + 3, sy + 1, ['ee', 'ee', 'e.'], { e: '#E07A55' })
+      break
+    }
+  }
+}
+
 function crown(c, cx, y) {
   c.stamp(cx - 4, y, ['y..y..y', 'yy.y.yy', 'yyyyyyy', 'ybyryby'], { y: GOLD.base, b: '#5BC0F2', r: '#F2557A' })
   c.set(cx - 4, y, GOLD.high); c.set(cx - 1, y, GOLD.high); c.set(cx + 2, y, GOLD.high)
@@ -475,6 +553,8 @@ export function drawPet(c, pet, mood, { x, y, frame = 0, look = 0, walking = fal
   face(c, cx, cy, bb, mood, frame, R, opts)
   limbs(c, cx, cy, bb, mood, frame, R, opts, true)
   if (form) extras(c, form, cx, cy, bb, R, frame, false)
+  if (form && !['dormido'].includes(mood)) styleGear(c, pet.style || 'equilibrado', form, cx, cy, bb, frame, true)
+  if (pet.night && form && frame % 10 < 6) c.set(Math.round(cx - rx * 0.4), Math.round(cy - ry * 0.3), '#FFF3B0')
   if (pet.stage === 'leyenda') crown(c, Math.round(cx), Math.round(cy - ry) - 4 - (form === 'fable' ? 7 : form === 'opus' ? 1 : 0))
   if ((pet.variant === 'brillante' || pet.stage === 'leyenda') && frame % 8 < 4) {
     const sx = Math.round(cx + rx + 1), sy = Math.round(cy - ry + 1)

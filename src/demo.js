@@ -39,18 +39,18 @@ export const SCENES = [
   { stage: 'nino', pct: 45, poops: 2, stats: { higiene: 25 }, ev: 'ev.caca' },
   { stage: 'teen', pct: 60, stats: { hambre: 12 }, ev: 'ev.critico.hambre' },
   { stage: 'teen', pct: 93, ev: 'ev.fuego', evVars: { pct: 93 } },
-  { stage: 'adulto', form: 'opus', pct: 51, working: true, ev: 'ev.estirar', evVars: { dur: '1h 35m' } },
-  { stage: 'adulto', form: 'sonnet', pct: 22, stats: { felicidad: 95 }, ev: 'act.caricia' },
-  { stage: 'adulto', form: 'haiku', pct: 100, ev: 'ev.agotado', evVars: { hora: '18:40' } },
-  { stage: 'adulto', form: 'fable', variant: 'brillante', pct: 30, sick: true, stats: { salud: 30 }, ev: 'ev.enfermo' },
-  { stage: 'leyenda', form: 'opus', pct: 15, stats: { felicidad: 99 }, ev: 'ev.evoluciona', evVars: { label: 'Leyenda' } },
+  { stage: 'adulto', form: 'opus', style: 'obras', pct: 51, working: true, ev: 'ev.estirar', evVars: { dur: '1h 35m' } },
+  { stage: 'adulto', form: 'sonnet', style: 'sabio', pct: 22, stats: { felicidad: 95 }, ev: 'act.caricia' },
+  { stage: 'adulto', form: 'haiku', style: 'hacker', pct: 100, ev: 'ev.agotado', evVars: { hora: '18:40' } },
+  { stage: 'adulto', form: 'fable', style: 'explorador', variant: 'brillante', pct: 30, sick: true, stats: { salud: 30 }, ev: 'ev.enfermo' },
+  { stage: 'leyenda', form: 'opus', style: 'director', pct: 15, stats: { felicidad: 99 }, ev: 'ev.evoluciona', evVars: { label: 'Leyenda' } },
   { stage: 'nube', alive: false, pct: 0, ev: 'ev.muerte' },
 ]
 
 export function demoFrame(i, now = Date.now()) {
   const sc = SCENES[i % SCENES.length]
   const pet = newPet({ now: now - 9 * 86400_000, name: 'Pixel' })
-  Object.assign(pet, { stage: sc.stage, form: sc.form || null, variant: sc.variant || 'normal', poops: sc.poops || 0, sick: !!sc.sick, alive: sc.alive !== false, xp: 123e6, bocados: 7 })
+  Object.assign(pet, { seed: i * 3, style: sc.style || null, stage: sc.stage, form: sc.form || null, variant: sc.variant || 'normal', poops: sc.poops || 0, sick: !!sc.sick, alive: sc.alive !== false, xp: 123e6, bocados: 7 })
   Object.assign(pet.stats, { hambre: 70, felicidad: 60, energia: 100 - sc.pct, salud: 90, higiene: 85 }, sc.stats || {})
   pet.streak.days = 12
   for (const id of ['eclosion', 'primer-bocado', 'nino', 'teen', 'millon', 'racha-7']) pet.achievements[id] = now - 86400_000

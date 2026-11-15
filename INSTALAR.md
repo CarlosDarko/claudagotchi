@@ -38,7 +38,7 @@ Antes de instalar, cuéntaselo al usuario en una o dos frases:
    En Windows: `& "$env:LOCALAPPDATA\Programs\claudagotchi\claudagotchi.exe" estado`
 
 3. **Cuéntale al usuario cómo seguir**, con estas ideas y en su idioma:
-   - Su mascota ya está en su escritorio, paseando por encima de la barra de tareas. Pasando el ratón por encima se ven sus necesidades y su % de uso, y con un clic se la cuida. Sus opciones (tamaño, mostrar el % siempre, arrancar con el ordenador) están en su icono junto al reloj.
+   - Su mascota ya está en su escritorio, en una islita con su casa, paseando por encima de la barra de tareas. Pasando el ratón por encima se ven sus necesidades y su % de uso, y con un clic se la cuida. Sus opciones (tamaño, mostrar el % siempre, arrancar con el ordenador) están en su icono junto al reloj.
    - También vive en la barra de abajo de Claude Code. Si no la ve, que cierre y vuelva a abrir Claude Code.
    - Ahora es un huevo y eclosiona en cuanto use Claude Code un poco. Come de los tokens que gasta programando.
    - Para verla en grande y cuidarla: abrir una terminal nueva y escribir `claudagotchi`. La primera vez sale una ayuda. Las teclas: `C` comer, `J` jugar, `L` limpiar, `M` medicina, `?` ayuda, `Q` salir.

@@ -107,3 +107,31 @@ test('el estado para el widget lleva todo lo que necesita', async () => {
   assert.equal(s.limits.session.pct, 51)
   assert.equal(s.menu.salir, 'Salir')
 })
+
+test('cada logro tiene su medalla y cada acción su icono', async () => {
+  const { ACHIEVEMENT_IDS, achievementText } = await import('../src/pet.js')
+  const { MEDALS, drawMedal, drawIcon, ICON_NAMES } = await import('../src/art.js')
+  for (const id of ACHIEVEMENT_IDS) {
+    assert.ok(MEDALS[id], `falta la medalla de ${id}`)
+    assert.notEqual(achievementText(id).name, id, `falta el texto de ${id}`)
+    assert.equal(drawMedal(id, true).w, 16)
+  }
+  for (const n of ICON_NAMES) assert.equal(drawIcon(n).h, 12)
+})
+
+test('el escenario se dibuja en sus dos modos y deja pasear dentro', async () => {
+  const { drawYard } = await import('../src/art.js')
+  const isla = drawYard(800, { mode: 'isla', home: 680, bocados: 5 })
+  assert.ok(isla.walk[0] > 400 && isla.walk[1] < 800)
+  const todo = drawYard(800, { mode: 'completo', home: 680 })
+  assert.ok(todo.walk[0] < 20 && todo.walk[1] > 780)
+})
+
+test('las 30 formas adultas se dibujan con su oficio', async () => {
+  const { drawCritter } = await import('../src/sprites.js')
+  for (const form of ['opus', 'sonnet', 'haiku', 'fable', 'mixto'])
+    for (const style of ['obras', 'explorador', 'hacker', 'sabio', 'director', 'equilibrado']) {
+      const { box } = drawCritter({ stage: 'adulto', form, style, poops: 0, alive: true, variant: 'normal', xp: 1 }, 'normal', 1)
+      assert.ok(box.top >= 0)
+    }
+})
