@@ -593,7 +593,7 @@ dependencies = [
 
 [[package]]
 name = "claudagotchi-widget"
-version = "0.5.1"
+version = "0.5.4"
 dependencies = [
  "active-win-pos-rs",
  "base64 0.22.1",

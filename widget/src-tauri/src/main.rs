@@ -61,6 +61,21 @@ fn run(args: &[&str]) -> Result<String, String> {
     Ok(String::from_utf8_lossy(&out.stdout).into_owned())
 }
 
+// En Windows, si se instaló con el .exe, añade la carpeta de la app al PATH del
+// usuario para que el comando 'claudagotchi' funcione en las terminales nuevas
+fn ensure_cli_in_path() {
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        let Some(dir) = sidecar().parent().map(|p| p.to_string_lossy().to_string()) else { return };
+        let script = format!(
+            "$d='{}'; $p=[Environment]::GetEnvironmentVariable('Path','User'); if (-not $p) {{ $p='' }}; if ($p -notlike \"*$d*\") {{ [Environment]::SetEnvironmentVariable('Path', ($p.TrimEnd(';') + ';' + $d), 'User') }}",
+            dir.replace('\'', "''")
+        );
+        let _ = Command::new("powershell").args(["-NoProfile", "-WindowStyle", "Hidden", "-Command", &script]).creation_flags(0x0800_0000).spawn();
+    }
+}
+
 // ---------- Comandos para la interfaz ----------
 
 #[tauri::command]
@@ -453,6 +468,7 @@ fn main() {
                 let _ = run(&["avisos", "si"]);
                 widget_config(serde_json::json!({ "autostartSet": true }));
             }
+            ensure_cli_in_path();
             build_tray(&handle, &state)?;
 
             if let Some(win) = app.get_webview_window("main") {
