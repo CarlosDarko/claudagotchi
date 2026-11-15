@@ -1,6 +1,6 @@
 [package]
 name = "claudagotchi-widget"
-version = "0.5.0"
+version = "0.5.1"
 description = "Claudagotchi: la mascota de escritorio que vive de tu uso de Claude Code"
 edition = "2021"
 license = "MIT"
