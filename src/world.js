@@ -65,14 +65,14 @@ const newer = (a, b) => {
 
 export async function checkUpdate(now = Date.now()) {
   const cache = readJSON(updateFile(), {})
-  if (!(cache.at && now - cache.at < 6 * 3600_000)) {
+  if (!(cache.at && now - cache.at < 3600_000)) {
     try {
       const r = await get(`https://api.github.com/repos/${REPO}/releases/latest`, 3000)
       cache.latest = r.tag_name
       cache.at = now
       writeJSON(updateFile(), cache)
     } catch {
-      cache.at = now - 5 * 3600_000 // reintenta en una hora
+      cache.at = now - 45 * 60_000 // reintenta en un cuarto de hora
       writeJSON(updateFile(), cache)
     }
   }
