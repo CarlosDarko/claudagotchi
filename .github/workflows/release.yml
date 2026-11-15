@@ -1,14 +1,32 @@
-# Al subir una etiqueta vX.Y.Z se compilan los programas para cada sistema
-# (sin necesidad de Node) y se publican en GitHub Releases. Los instaladores
-# descargan siempre la última versión de ahí.
+# Cuando cambia la versión de src/version.js en main, se compilan los programas
+# para cada sistema (sin necesidad de Node) y se publican en GitHub Releases con
+# la etiqueta vX.Y.Z. Los instaladores descargan siempre la última de ahí.
 name: Release
 on:
   push:
-    tags: ['v*']
+    branches: [main]
+    paths: ['src/version.js']
+  workflow_dispatch:
 permissions:
   contents: write
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.v.outputs.tag }}
+      exists: ${{ steps.v.outputs.exists }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: v
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="v$(sed -n "s/.*VERSION = '\(.*\)'.*/\1/p" src/version.js)"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          if gh release view "$tag" --repo "${{ github.repository }}" >/dev/null 2>&1; then echo "exists=true" >> "$GITHUB_OUTPUT"; else echo "exists=false" >> "$GITHUB_OUTPUT"; fi
   build:
+    needs: check
+    if: needs.check.outputs.exists == 'false'
     strategy:
       matrix:
         include:
@@ -38,7 +56,7 @@ jobs:
           name: claudagotchi-${{ matrix.name }}
           path: claudagotchi-${{ matrix.name }}.*
   release:
-    needs: build
+    needs: [check, build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -48,4 +66,4 @@ jobs:
       - name: Publicar
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${{ github.ref_name }}" out/* --repo "${{ github.repository }}" --title "Claudagotchi ${{ github.ref_name }}" --generate-notes
+        run: gh release create "${{ needs.check.outputs.tag }}" out/* --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "Claudagotchi ${{ needs.check.outputs.tag }}" --generate-notes
