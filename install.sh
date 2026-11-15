@@ -47,13 +47,39 @@ if [ "$BIN" = "$DIR/claudagotchi" ] && ! printf '%s' ":$PATH:" | grep -q ":$DIR:
 fi
 
 "$BIN" instalar
+
+# La mascota de escritorio (pasea por encima de la barra de tareas)
+WIDGET=""
+if [ -z "${CLAUDAGOTCHI_SIN_WIDGET:-}" ]; then
+  base="https://github.com/$REPO/releases/latest/download"
+  if [ "$os" = darwin ]; then
+    mkdir -p "$HOME/Applications"
+    if curl -fsSL "$base/Claudagotchi-macos-$arch.app.tar.gz" | tar -xz -C "$HOME/Applications" 2>/dev/null; then
+      WIDGET="$HOME/Applications/Claudagotchi.app"
+      ok "Mascota de escritorio en $WIDGET"
+      open "$WIDGET" || true
+    fi
+  elif [ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ] && [ "$arch" = x64 ]; then
+    if curl -fsSL "$base/Claudagotchi-linux-x64.AppImage" -o "$DIR/Claudagotchi.AppImage"; then
+      chmod +x "$DIR/Claudagotchi.AppImage"
+      WIDGET="$DIR/Claudagotchi.AppImage"
+      ok "Mascota de escritorio en $WIDGET"
+      (nohup "$WIDGET" >/dev/null 2>&1 &) || true
+    fi
+  fi
+fi
+
 echo
 c "Listo. Tu mascota ya vive en la barra de abajo de Claude Code."
-echo "Para verla en grande, abre una terminal nueva y escribe: claudagotchi"
+if [ -n "$WIDGET" ]; then
+  echo "Y en tu escritorio: pasea por encima de la barra de tareas. Pasa el ratón por encima para verla, clic para cuidarla."
+  echo "Sus opciones están en el icono junto al reloj."
+fi
+echo "Para la vista completa en la terminal, abre una nueva y escribe: claudagotchi"
 echo
 
-# Abrirla ahora mismo, si hay una terminal donde dibujar
-if [ -z "${CLAUDAGOTCHI_NO_OPEN:-}" ] && [ -e /dev/tty ] && [ -t 1 ]; then
+# Sin mascota de escritorio, la abrimos en la terminal para que la conozcas
+if [ -z "$WIDGET" ] && [ -z "${CLAUDAGOTCHI_NO_OPEN:-}" ] && [ -e /dev/tty ] && [ -t 1 ]; then
   sleep 1
   "$BIN" < /dev/tty
 fi

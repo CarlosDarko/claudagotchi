@@ -1,8 +1,8 @@
 # Claudagotchi
 
-Una mascota tipo tamagotchi que vive en tu terminal y en la barra de estado de Claude Code, y que **se alimenta de tu uso real de Claude**. Cuanto más programas, más come y más crece. Si te pasas, se quema. Si llegas al límite de la sesión, se duerme hasta que se reinicia. Y si llevas horas sin parar, te pide que descanses (y se cura cuando lo haces).
+Una mascota tipo tamagotchi que vive **en tu escritorio**, en la barra de estado de Claude Code y en tu terminal, y que **se alimenta de tu uso real de Claude**. Cuanto más programas, más come y más crece. Si te pasas, se quema. Si llegas al límite de la sesión, se duerme hasta que se reinicia. Y si llevas horas sin parar, te pide que descanses (y se cura cuando lo haces).
 
-![La mascota trabajando contigo, con sus necesidades y tu uso real](docs/img/principal.png)
+![Tu mascota paseando por el escritorio: al pasar el ratón enseña sus necesidades y tu uso de Claude](docs/img/widget-tarjeta.png)
 
 ## Instalarlo
 
@@ -30,7 +30,7 @@ En **Windows**, abre PowerShell y pega:
 irm https://raw.githubusercontent.com/CarlosDarko/claudagotchi/main/install.ps1 | iex
 ```
 
-Las dos descargan el programa ya preparado para tu sistema (no necesitan Node), ponen la mascota en la barra de Claude Code y la abren para que la conozcas. La primera vez sale una ayuda.
+Las dos descargan el programa ya preparado para tu sistema (no necesitan Node), ponen la mascota en tu escritorio y en la barra de Claude Code, y la arrancan. Si no quieres la mascota de escritorio, añade `CLAUDAGOTCHI_SIN_WIDGET=1` delante del comando.
 
 Después, cuando quieras verla en grande, abre una terminal y escribe `claudagotchi`. Para ver todo lo que puede hacer sin esperar semanas, `claudagotchi demo`. Para actualizar, `claudagotchi actualizar`.
 
@@ -50,6 +50,23 @@ Mezcla dos cosas que ya existían por separado:
 - **Un tamagotchi de verdad**: con hambre, felicidad, energía, salud e higiene, cacas que limpiar, enfermedades, evolución en seis etapas, cinco formas adultas, logros, minijuego y, si lo descuidas, una nube a la que se va.
 
 La gracia está en que las dos cosas están conectadas: tus tokens son su comida, el % de tu sesión es su energía y tus descansos son su salud.
+
+### En tu escritorio, sin molestar
+
+La mascota pasea por encima de la barra de tareas, como en los juegos de escritorio tipo Tiny Pasture. Es una ventana transparente y siempre encima, pero **los clics la atraviesan** salvo justo encima de ella, así que puedes seguir trabajando como si no estuviera.
+
+- **De un vistazo**: una pastilla sobre su cabeza con el % de tu sesión (o tus tokens de hoy), y un `!` si necesita algo.
+- **Al pasar el ratón**: su tarjeta, con sus necesidades, tu sesión y tu semana, cuándo se reinician y si llegarás al límite.
+- **Con un clic**: los botones para darle de comer, jugar, limpiar, curarla o apagarle la luz.
+- **En el icono junto al reloj**: tamaño (pequeña, mediana o grande), mostrar el % siempre o solo al pasar el ratón, arrancar con el ordenador y salir.
+
+![Todas las mascotas tal como pasean por el escritorio](docs/img/mascotas.png)
+
+### En la terminal
+
+`claudagotchi` abre la vista completa: su habitación (con una ventana que enseña el cielo de tu hora real), sus necesidades, tu uso detallado, sus logros y su álbum.
+
+![La vista completa en la terminal](docs/img/principal.png)
 
 ### Pensado para que se entienda solo
 
@@ -71,6 +88,7 @@ La gracia está en que las dos cosas están conectadas: tus tokens son su comida
 | `claudagotchi nuevo [nombre]` | Adopta un huevo nuevo (la actual se jubila al álbum) |
 | `claudagotchi idioma es` | Cambia el idioma |
 | `claudagotchi actualizar` | Descarga la última versión (tu mascota no se toca) |
+| `claudagotchi diagnostico` | Explica por qué se ve (o no) tu % real |
 | `claudagotchi demo` | Todas las etapas y humores con datos de mentira, sin tocar nada tuyo |
 | `claudagotchi foto [ancho] [alto]` | Imprime un fotograma de la interfaz (útil para compartir) |
 
@@ -158,7 +176,7 @@ Está inspirado en [Clauddy](https://github.com/renatoaug/claude-usage-monitor),
 | | Clauddy | Claudagotchi |
 |---|---|---|
 | La mascota | Reacciona a tu uso | **Vive de tu uso**: necesidades, evolución, enfermedades, muerte y álbum |
-| Dónde vive | App de escritorio flotante | En la terminal y **dentro de Claude Code**, en su statusline, donde ya estás |
+| Dónde vive | App de escritorio flotante | En el escritorio, en la barra de Claude Code y en la terminal, la misma mascota en los tres sitios |
 | Instalación | App nativa por plataforma | Pegando una frase en Claude Code, o una línea en la terminal. En macOS, Linux y Windows |
 | Login | Su propio OAuth | **Ninguno**: reutiliza el de Claude Code o el `rate_limits` de la statusline |
 | Tu salud | Te sugiere estirar | Los descansos **curan** a la mascota y trabajar sin parar la enferma |

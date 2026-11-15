@@ -54,3 +54,27 @@ En `~/.claudagotchi/` (o en `CLAUDAGOTCHI_HOME`). La carpeta de Claude Code se p
 | `CLAUDAGOTCHI_TRUECOLOR=1` | Fuerza color de 24 bits si tu terminal lo admite y no lo anuncia |
 | `NO_COLOR` | Sin colores |
 | `CLAUDE_CONFIG_DIR` | La carpeta de Claude Code, si no es `~/.claude` |
+
+## La mascota de escritorio
+
+Está en `widget/`. Es una app de [Tauri](https://tauri.app) (Rust y la vista web del sistema, unos pocos MB) que lleva dentro el mismo programa de terminal, compilado con Bun, y le pide los datos con `claudagotchi json` y las acciones con `claudagotchi accion <x>`. Así la mascota del escritorio, la de la terminal y la de la barra de Claude Code son la misma.
+
+| Fichero | Qué hace |
+|---|---|
+| `widget/src-tauri/src/main.rs` | La ventana transparente, siempre encima, a lo ancho de la parte de abajo de la pantalla. Vigila el cursor y solo deja de pasar los clics encima de la mascota o de su tarjeta. El icono junto al reloj, su menú y el arranque con el ordenador |
+| `widget/ui/main.js` | El paseo, el bocadillo, la pastilla con el %, la tarjeta, los botones y el minijuego. Dibuja con los mismos sprites que la terminal (`drawCritter`) |
+| `widget/build.mjs` | Empaqueta la interfaz en `widget/dist` |
+
+Para probarlo en local (necesita Rust, Bun y, en Linux, las librerías de WebKitGTK):
+
+```bash
+bun build bin/claudagotchi.js --compile --outfile widget/src-tauri/binaries/claudagotchi-$(rustc -vV | sed -n 's/host: //p')
+```
+
+```bash
+node widget/build.mjs && cd widget && npm install && npx tauri dev
+```
+
+La interfaz también se puede ver en el navegador, con datos de mentira, con `node tools/widget-preview.cjs`.
+
+Cada versión publicada compila la app para Windows, macOS (Apple e Intel) y Linux en `.github/workflows/release.yml`.

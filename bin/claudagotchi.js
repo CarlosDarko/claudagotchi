@@ -73,6 +73,39 @@ async function main() {
       saveConfig({ lang })
       return console.log(t('cli.idioma', { lang }))
     }
+    case 'json': {
+      // Para el widget de escritorio
+      const { snapshot } = await import('../src/snapshot.js')
+      return process.stdout.write(JSON.stringify(snapshot(await refresh())))
+    }
+    case 'accion':
+    case 'action': {
+      const { doAction } = await import('../src/store.js')
+      const { snapshot } = await import('../src/snapshot.js')
+      const { getLimits } = await import('../src/account.js')
+      const { scan } = await import('../src/logs.js')
+      let res
+      if (args[0] === 'nuevo') {
+        newEgg()
+        res = { ok: true, msg: '' }
+      } else res = doAction(args[0], args[1] ?? null).res
+      const index = scan()
+      const { loadPet } = await import('../src/store.js')
+      const limits = await getLimits({ allowNetwork: false })
+      return process.stdout.write(JSON.stringify({ res, state: snapshot({ pet: loadPet(index), index, limits }) }))
+    }
+    case 'widget-config': {
+      // claudagotchi widget-config '{"scale":3}'
+      const { loadConfig } = await import('../src/store.js')
+      const cfg = loadConfig()
+      saveConfig({ widget: { ...(cfg.widget || {}), ...JSON.parse(args[0] || '{}') } })
+      return process.stdout.write(JSON.stringify(loadConfig().widget))
+    }
+    case 'diagnostico':
+    case 'doctor': {
+      const { diagnose } = await import('../src/account.js')
+      return console.log(await diagnose())
+    }
     case 'actualizar':
     case 'update': {
       // Vuelve a pasar el instalador: descarga la última versión y no toca la mascota

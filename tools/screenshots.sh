@@ -15,3 +15,17 @@ shot logros "--demo 6 --logros" 28
 node tools/gallery.js > "$tmp/galeria.html"
 node tools/shot.cjs "$tmp/galeria.html" docs/img/galeria.png 1000 300
 echo "Capturas en docs/img"
+
+# El widget de escritorio en el navegador, sobre un fondo de escritorio
+node widget/build.mjs >/dev/null
+node -e "
+const { demoFrame } = await import('./src/demo.js'); const { snapshot } = await import('./src/snapshot.js')
+const s = snapshot(demoFrame(6)); s.widget = { scale: 2, showBadge: true, x: 600 }
+require('node:fs').writeFileSync('widget/dist/mock.json', JSON.stringify(s))
+" --input-type=module 2>/dev/null || node --input-type=module -e "
+import { demoFrame } from './src/demo.js'; import { snapshot } from './src/snapshot.js'; import fs from 'node:fs'
+const s = snapshot(demoFrame(6)); s.widget = { scale: 2, showBadge: true, x: 600 }
+fs.writeFileSync('widget/dist/mock.json', JSON.stringify(s))"
+node tools/widget-preview.cjs widget/dist/mock.json docs/img/widget.png
+node tools/widget-preview.cjs widget/dist/mock.json docs/img/widget-tarjeta.png hover
+node tools/gallery.js critter > "$tmp/mascotas.html" && node tools/shot.cjs "$tmp/mascotas.html" docs/img/mascotas.png 1200 300

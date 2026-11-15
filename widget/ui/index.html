@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claudagotchi</title>
+<style>
+  :root {
+    --card: rgba(22, 21, 32, 0.94);
+    --line: rgba(255, 255, 255, 0.09);
+    --text: #ECEAF5;
+    --soft: #A8A4C4;
+    --dim: #77738F;
+    --accent: #E07A55;
+    --green: #5FD38D;
+    --amber: #F2A93B;
+    --red: #FF6B5E;
+    --empty: rgba(255, 255, 255, 0.10);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%; overflow: hidden; background: transparent;
+    font: 13px/1.35 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color: var(--text);
+    user-select: none; -webkit-user-select: none; cursor: default;
+  }
+  #pet { position: absolute; bottom: 0; image-rendering: pixelated; will-change: transform; }
+  .float { position: absolute; bottom: 0; transform: translateX(-50%); pointer-events: auto; }
+  .hidden { display: none !important; }
+
+  /* Pastilla con el % de la sesión, siempre a la vista si se quiere */
+  #badge {
+    display: flex; align-items: center; gap: 6px; padding: 3px 8px 3px 7px; border-radius: 999px;
+    background: var(--card); border: 1px solid var(--line); font-size: 11px; font-weight: 600; white-space: nowrap;
+    box-shadow: 0 4px 14px rgba(0,0,0,.25);
+  }
+  #badge .dot { width: 7px; height: 7px; border-radius: 50%; }
+  #badge .alert { color: var(--accent); }
+
+  /* Bocadillo */
+  #bubble {
+    max-width: 240px; padding: 8px 11px; border-radius: 12px; background: #FBF8F3; color: #26232F;
+    font-size: 12.5px; box-shadow: 0 6px 20px rgba(0,0,0,.28); animation: pop .18s ease-out;
+  }
+  #bubble::after {
+    content: ''; position: absolute; left: 50%; bottom: -6px; margin-left: -6px;
+    border: 6px solid transparent; border-bottom: 0; border-top-color: #FBF8F3;
+  }
+  #bubble.alert { background: #FFE9DF; }
+  #bubble.alert::after { border-top-color: #FFE9DF; }
+  @keyframes pop { from { transform: translateX(-50%) scale(.9); opacity: 0; } to { transform: translateX(-50%) scale(1); opacity: 1; } }
+
+  /* Tarjeta */
+  #card {
+    width: 300px; padding: 12px 14px 12px; border-radius: 16px; background: var(--card); border: 1px solid var(--line);
+    box-shadow: 0 12px 36px rgba(0,0,0,.35); backdrop-filter: blur(14px); animation: rise .16s ease-out;
+  }
+  @keyframes rise { from { opacity: 0; translate: 0 6px; } to { opacity: 1; translate: 0 0; } }
+  .head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; }
+  .name { font-weight: 700; font-size: 15px; color: var(--accent); }
+  .what { color: var(--soft); font-size: 12px; }
+  .mood { margin-left: auto; font-size: 11.5px; color: var(--soft); display: flex; align-items: center; gap: 5px; }
+  .mood i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); display: inline-block; }
+  .needs { display: grid; grid-template-columns: 74px 1fr; row-gap: 5px; align-items: center; }
+  .needs .lbl { color: var(--soft); font-size: 12px; }
+  .needs .lbl.low { color: var(--red); font-weight: 600; }
+  .pips { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; }
+  .pips span { height: 8px; border-radius: 2px; background: var(--empty); }
+  hr { border: 0; border-top: 1px solid var(--line); margin: 11px 0 9px; }
+  .meter { display: grid; grid-template-columns: 58px 40px 1fr; align-items: center; gap: 8px; }
+  .sub { margin: 1px 0 6px 106px; color: var(--dim); font-size: 11.5px; }
+  .sub.wide { margin-left: 0; }
+  .meter .pct { font-weight: 700; text-align: right; }
+  .bar { height: 5px; border-radius: 3px; background: var(--empty); overflow: hidden; }
+  .bar b { display: block; height: 100%; border-radius: 3px; }
+  .sub.warn { color: #FF9A85; }
+  .sub.ok { color: var(--green); }
+  .row { display: flex; justify-content: space-between; color: var(--soft); font-size: 12px; }
+  .row strong { color: var(--text); }
+  .working { color: var(--green); }
+
+  /* Acciones */
+  .actions { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-top: 11px; }
+  .actions button {
+    all: unset; display: grid; place-items: center; gap: 1px; padding: 6px 0 5px; border-radius: 10px;
+    background: rgba(255,255,255,.05); border: 1px solid transparent; font-size: 16px; cursor: pointer; transition: background .12s;
+  }
+  .actions button small { font-size: 8.6px; letter-spacing: -0.1px; color: var(--soft); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions button:hover { background: rgba(255,255,255,.11); }
+  .actions button.hot { border-color: var(--accent); background: rgba(224,122,85,.16); }
+  .actions button.hot small { color: var(--text); }
+  .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 9px; font-size: 11.5px; color: var(--dim); }
+  .link { all: unset; cursor: pointer; color: var(--soft); }
+  .link:hover { color: var(--text); }
+  .game { text-align: center; padding: 4px 0 2px; }
+  .game .q { font-weight: 600; margin-bottom: 8px; }
+  .game .btns { display: flex; justify-content: center; gap: 10px; margin: 8px 0; }
+  .game .btns button { all: unset; cursor: pointer; padding: 7px 18px; border-radius: 10px; background: rgba(255,255,255,.08); font-size: 16px; }
+  .game .btns button:hover { background: rgba(255,255,255,.16); }
+  .game .dots { letter-spacing: 4px; }
+</style>
+</head>
+<body>
+  <canvas id="pet"></canvas>
+  <div id="badge" class="float hidden"></div>
+  <div id="bubble" class="float hidden"></div>
+  <div id="card" class="float hidden"></div>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

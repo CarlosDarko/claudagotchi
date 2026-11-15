@@ -110,3 +110,23 @@ export function lastError() {
 }
 
 export const hasCredentialsFile = () => fs.existsSync(path.join(CLAUDE_DIR, '.credentials.json'))
+
+// Explica por qué hay (o no hay) % real. Para "claudagotchi diagnostico".
+export async function diagnose(now = Date.now()) {
+  const out = []
+  const file = path.join(CLAUDE_DIR, '.credentials.json')
+  out.push(`Carpeta de Claude Code: ${CLAUDE_DIR}`)
+  out.push(`Fichero de login: ${fs.existsSync(file) ? 'sí está' : 'no está'} (${file})`)
+  const creds = readCredentials()
+  if (!creds) out.push('Login de Claude Code: no encontrado. Abre Claude Code e inicia sesión con tu cuenta de Claude (no con una API key).')
+  else {
+    out.push(`Login de Claude Code: encontrado${creds.plan ? `, plan ${creds.plan}` : ''}`)
+    if (creds.expiresAt) out.push(`Caduca: ${new Date(creds.expiresAt).toLocaleString()}${creds.expiresAt < now ? ' (YA CADUCADO: abre Claude Code un momento y se renueva solo)' : ''}`)
+    const r = await fetchLimits({ creds, now })
+    out.push(r.limits ? `Consulta del %: bien. Sesión ${r.limits.session?.pct ?? '—'} %, semana ${r.limits.week?.pct ?? '—'} %` : `Consulta del %: falla (${r.error})`)
+  }
+  const cache = readJSON(files.limits(), {})
+  if (cache.limits) out.push(`Última lectura guardada: ${new Date(cache.limits.fetchedAt).toLocaleString()} (vía ${cache.limits.source})`)
+  if (cache.error) out.push(`Último error: ${cache.error}`)
+  return out.join('\n')
+}

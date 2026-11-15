@@ -202,6 +202,21 @@ export default {
     ] },
   },
 
+  // Widget de escritorio
+  'menu': {
+    ocultar: 'Ocultar mascota', mostrar: 'Mostrar mascota', tamano: 'Tamaño', pequena: 'Pequeña', mediana: 'Mediana', grande: 'Grande',
+    porcentaje: 'Mostrar el % siempre', arrancar: 'Arrancar con el ordenador', completa: 'Abrir vista completa', salir: 'Salir',
+  },
+  'w.hoy': 'Hoy',
+  'w.tokens': '{n} tokens',
+  'w.verTodo': 'Vista completa',
+  'w.cerrar': 'Cerrar',
+  'w.ahora': 'ahora',
+  'w.sinCuenta': 'Sin % real todavía',
+  'w.juego': '¿Hacia dónde mirará?',
+  'w.ronda': 'Ronda {r} de 5',
+  'w.pista': 'Pasa el ratón por encima para verla. Clic para cuidarla.',
+
   // CLI
   'cli.ayuda': `claudagotchi: una mascota que vive de tu uso de Claude Code
 
@@ -214,6 +229,7 @@ Uso:
   claudagotchi nuevo [nombre]  adopta un huevo nuevo (la actual se jubila al álbum)
   claudagotchi idioma <código> cambia el idioma (disponibles: {langs})
   claudagotchi actualizar      descarga la última versión (tu mascota no se toca)
+  claudagotchi diagnostico     explica por qué se ve (o no) tu % real
   claudagotchi demo            pasea por todas las etapas y humores
   claudagotchi statusline      lo que llama Claude Code (lee JSON por stdin)
 

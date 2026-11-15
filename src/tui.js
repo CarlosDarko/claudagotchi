@@ -3,7 +3,7 @@
 import { refresh, doAction, newEgg, loadConfig, saveConfig } from './store.js'
 import { act, mood, MOOD_LABEL, STAGE_LABEL, FORM_LABEL, latestEvent, ACHIEVEMENT_IDS, achievementText } from './pet.js'
 import { drawScene } from './sprites.js'
-import { canvasToAnsi, paint, dim, bold, bar, padEnd, truncate, wrap, visibleWidth, RESET } from './render.js'
+import { canvasToAnsi, paint, dim, bold, bar, bg, padEnd, truncate, wrap, visibleWidth, RESET } from './render.js'
 import { lastDays, sumBy, burnRate, isWorking, toolKind } from './logs.js'
 import { petIcon, pctColor } from './statusline.js'
 import { t, tmap } from './i18n/index.js'
@@ -197,12 +197,15 @@ export function renderFrame(ui, W, H, now = Date.now()) {
 }
 
 function mainView(ui, pet, index, limits, m, hint, now, W, bodyH) {
-  const zoom = W >= 150 && bodyH >= 36 ? 2 : 1
+  const zoom = W >= 150 && bodyH >= 40 ? 2 : 1
   // En terminales estrechas la habitación se encoge para que quepan las tarjetas
-  const sceneW = zoom === 1 && W < 100 ? 38 : 48
+  const sceneW = zoom === 1 && W < 100 ? 40 : 48
   const sceneCols = sceneW * zoom
-  const sceneH = bodyH < 22 ? 22 : 26
-  const inner = [...bubble(pet, now, sceneCols, ui.game ? null : hint), ...canvasToAnsi(drawScene(pet, m, { w: sceneW, h: sceneH, frame: ui.frame, wander: !ui.game }), zoom)]
+  const sceneH = 36
+  const scene = canvasToAnsi(drawScene(pet, m, { w: sceneW, h: sceneH, frame: ui.frame, wander: !ui.game, now }), zoom)
+  // El bocadillo flota sobre la pared, encima de la habitación
+  const bub = bubble(pet, now, sceneCols, ui.game ? null : hint).filter((l) => l !== '')
+  const inner = scene.map((l, i) => (i < bub.length ? overlay(l, bub[i], sceneCols) : l))
   if (ui.game) inner.push(gameArrow(ui, sceneCols))
   const moodTxt = paint(m === 'fuego' || m === 'enfermo' ? RED : ACCENT, `● ${MOOD_LABEL[m]}`)
   const left = card(inner, sceneCols + 4, { right: moodTxt })
@@ -211,6 +214,32 @@ function mainView(ui, pet, index, limits, m, hint, now, W, bodyH) {
   if (rightW < 30) return [...left.map((l) => ` ${l}`), ...rightCards(ui, pet, index, limits, now, Math.min(W - 2, 60), 0).map((l) => ` ${l}`)]
   const right = rightCards(ui, pet, index, limits, now, rightW, left.length)
   return sideBySide(left.map((l) => ` ${l}`), right, leftW + 2, Math.max(left.length, right.length))
+}
+
+// Pone el texto `top` centrado encima de una línea de la escena, sobre la pared
+function overlay(sceneLine, top, width) {
+  const tw = visibleWidth(top)
+  const start = Math.max(0, Math.floor((width - tw) / 2))
+  const pre = cutAnsi(sceneLine, start)
+  const rest = dropAnsi(sceneLine, start + tw)
+  return `${pre}${RESET}${top.trimStart()}${RESET}${rest}`
+}
+// Quita las primeras `n` columnas de una línea con códigos ANSI, conservando el color
+function dropAnsi(s, n) {
+  let width = 0
+  let codes = ''
+  let out = ''
+  for (const m of s.matchAll(/\x1b\[[0-9;]*m|[\s\S]/gu)) {
+    const tok = m[0]
+    if (tok.startsWith('\x1b')) {
+      if (width < n) codes += tok
+      else out += tok
+      continue
+    }
+    if (width >= n) out += tok
+    width += visibleWidth(tok)
+  }
+  return codes + out
 }
 
 function rightCards(ui, pet, index, limits, now, w, matchH) {
@@ -259,7 +288,7 @@ function footer(ui, pet, hint, W) {
 function bubble(pet, now, width, hint) {
   const ev = latestEvent(pet, now, 3 * 60_000)
   const text = ev?.text || hint?.text
-  if (!text) return ['', '', '', '', '']
+  if (!text) return []
   const alert = ev ? ['aviso', 'fuego', 'muerte'].includes(ev.kind) : true
   const txt = wrap(text, Math.min(42, width - 6)).slice(0, 3)
   const w = Math.max(...txt.map(visibleWidth))
@@ -268,11 +297,8 @@ function bubble(pet, now, width, hint) {
   const box = [paint(border, `╭${'─'.repeat(w + 2)}╮`)]
   for (const l of txt) box.push(`${paint(border, '│')} ${paint(alert ? '#FFD3C2' : TEXT, padEnd(l, w))} ${paint(border, '│')}`)
   box.push(paint(border, `╰${'─'.repeat(tail)}┬${'─'.repeat(w + 1 - tail)}╯`))
-  box.push(`${' '.repeat(tail + 1)}${paint(border, '╵')}`)
-  const pad = ' '.repeat(Math.max(0, Math.floor((width - w - 4) / 2)))
-  const out = box.map((l) => pad + l)
-  while (out.length < 5) out.unshift('')
-  return out
+  box.push(`${' '.repeat(tail + 1)}${paint(border, '╵')}${' '.repeat(Math.max(0, w + 2 - tail))}`)
+  return box.map((l) => `${bg('#211D33')}${l.replace(/\x1b\[0m/g, `\x1b[0m${bg('#211D33')}`)}`)
 }
 
 // Medidor de 10 pastillas, como en un tamagotchi

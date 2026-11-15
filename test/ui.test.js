@@ -84,3 +84,26 @@ test('los sprites se exportan a SVG', () => {
   assert.match(svg, /^<svg/)
   assert.ok(svg.length > 1000)
 })
+
+test('el bicho suelto del widget se dibuja en todos los humores sin salirse', async () => {
+  const { drawCritter, CRITTER_W, CRITTER_H } = await import('../src/sprites.js')
+  const moods = ['normal', 'feliz', 'trabajando', 'hambriento', 'sucio', 'triste', 'cansado', 'enfermo', 'fuego', 'dormido']
+  for (const stage of ['bebe', 'nino', 'teen', 'adulto', 'leyenda']) {
+    for (const form of ['opus', 'sonnet', 'haiku', 'fable', 'mixto']) {
+      for (const m of moods) {
+        const { canvas, box } = drawCritter({ stage, form, poops: 1, alive: true, variant: 'normal', xp: 1 }, m, 5)
+        assert.equal(canvas.w, CRITTER_W)
+        assert.equal(canvas.h, CRITTER_H)
+        assert.ok(box.top >= 0, `${stage}/${form}/${m} se sale por arriba (${box.top})`)
+      }
+    }
+  }
+})
+
+test('el estado para el widget lleva todo lo que necesita', async () => {
+  const { snapshot } = await import('../src/snapshot.js')
+  const s = snapshot(demoFrame(6))
+  for (const k of ['pet', 'mood', 'moodLabel', 'what', 'limits', 'today', 'menu']) assert.ok(k in s, k)
+  assert.equal(s.limits.session.pct, 51)
+  assert.equal(s.menu.salir, 'Salir')
+})

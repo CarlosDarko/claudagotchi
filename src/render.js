@@ -3,11 +3,12 @@
 const ESC = '\x1b['
 export const RESET = `${ESC}0m`
 
-export const TRUECOLOR = /truecolor|24bit/i.test(process.env.COLORTERM || '') || ['iTerm.app', 'vscode', 'WezTerm', 'ghostty'].includes(process.env.TERM_PROGRAM) || process.env.CLAUDAGOTCHI_TRUECOLOR === '1'
+// Windows Terminal (WT_SESSION) y la consola moderna de Windows admiten color de 24 bits aunque no lo anuncien
+export const TRUECOLOR = /truecolor|24bit/i.test(process.env.COLORTERM || '') || ['iTerm.app', 'vscode', 'WezTerm', 'ghostty', 'Hyper'].includes(process.env.TERM_PROGRAM) || !!process.env.WT_SESSION || process.platform === 'win32' || process.env.CLAUDAGOTCHI_TRUECOLOR === '1'
 export const NO_COLOR = 'NO_COLOR' in process.env
 
 function rgb(hex) {
-  const n = parseInt(hex.slice(1), 16)
+  const n = parseInt(hex.slice(1, 7), 16)
   return [n >> 16, (n >> 8) & 255, n & 255]
 }
 function to256([r, g, b]) {

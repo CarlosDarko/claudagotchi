@@ -55,8 +55,62 @@ jobs:
         with:
           name: claudagotchi-${{ matrix.name }}
           path: claudagotchi-${{ matrix.name }}.*
+  widget:
+    # La app de escritorio (Tauri) con el programa de terminal dentro
+    needs: check
+    if: needs.check.outputs.exists == 'false'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-latest, triple: x86_64-pc-windows-msvc, bun: bun-windows-x64, bundles: nsis, name: windows-x64 }
+          - { os: macos-latest, triple: aarch64-apple-darwin, bun: bun-darwin-arm64, bundles: app, name: macos-arm64 }
+          - { os: macos-latest, triple: x86_64-apple-darwin, bun: bun-darwin-x64, bundles: app, name: macos-x64 }
+          - { os: ubuntu-22.04, triple: x86_64-unknown-linux-gnu, bun: bun-linux-x64, bundles: appimage, name: linux-x64 }
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.triple }}
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: widget/src-tauri
+      - name: Librerías de Linux
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev
+      - name: Programa de terminal (va dentro de la app)
+        run: |
+          ext=""; [ "${{ runner.os }}" = Windows ] && ext=".exe"
+          mkdir -p widget/src-tauri/binaries
+          bun build bin/claudagotchi.js --compile --minify --target=${{ matrix.bun }} --outfile "widget/src-tauri/binaries/claudagotchi-${{ matrix.triple }}$ext"
+      - name: Interfaz
+        run: cd widget && npm ci --silent && node build.mjs
+      - name: App
+        run: cd widget && npx tauri build --target ${{ matrix.triple }} --bundles ${{ matrix.bundles }}
+      - name: Empaquetar con nombres fijos
+        run: |
+          B=widget/src-tauri/target/${{ matrix.triple }}/release/bundle
+          mkdir -p out
+          case "${{ matrix.name }}" in
+            windows-x64) cp "$B"/nsis/*-setup.exe out/Claudagotchi-windows-x64-setup.exe ;;
+            macos-*) tar -czf out/Claudagotchi-${{ matrix.name }}.app.tar.gz -C "$B/macos" Claudagotchi.app ;;
+            linux-x64) cp "$B"/appimage/*.AppImage out/Claudagotchi-linux-x64.AppImage ;;
+          esac
+          ls -la out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: widget-${{ matrix.name }}
+          path: out/*
   release:
-    needs: [check, build]
+    needs: [check, build, widget]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4

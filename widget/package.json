@@ -1,0 +1,12 @@
+{
+  "name": "claudagotchi-widget",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:ui": "node build.mjs",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}

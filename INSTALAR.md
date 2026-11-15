@@ -9,6 +9,7 @@ Claudagotchi es una mascota tipo tamagotchi que vive en la barra de estado de Cl
 Antes de instalar, cuéntaselo al usuario en una o dos frases:
 
 - Descarga un programa (unos 40 MB) en `~/.claudagotchi/bin` en macOS y Linux, o en `%LOCALAPPDATA%\Programs\claudagotchi` en Windows, y añade esa carpeta al PATH.
+- Instala la mascota de escritorio, una ventanita transparente que pasea por encima de la barra de tareas y arranca con el ordenador (se puede quitar desde su icono junto al reloj). En Windows queda en `%LOCALAPPDATA%\Claudagotchi`, en macOS en `~/Applications/Claudagotchi.app` y en Linux en `~/.claudagotchi/bin/Claudagotchi.AppImage`. Si el usuario no la quiere, añade `CLAUDAGOTCHI_SIN_WIDGET=1` al comando del paso 1.
 - Pone la mascota como barra de estado de Claude Code, en `~/.claude/settings.json` (clave `statusLine`). Si ya había otra, la guarda, y `claudagotchi desinstalar` la devuelve.
 - Guarda los datos de la mascota en `~/.claudagotchi/`. Lee los logs de Claude Code de `~/.claude/projects` y no envía nada a ningún sitio, salvo la consulta del % de uso a la API de Anthropic con el login que Claude Code ya tiene.
 
@@ -37,7 +38,8 @@ Antes de instalar, cuéntaselo al usuario en una o dos frases:
    En Windows: `& "$env:LOCALAPPDATA\Programs\claudagotchi\claudagotchi.exe" estado`
 
 3. **Cuéntale al usuario cómo seguir**, con estas ideas y en su idioma:
-   - Su mascota ya vive en la barra de abajo de Claude Code. Si no la ve, que cierre y vuelva a abrir Claude Code.
+   - Su mascota ya está en su escritorio, paseando por encima de la barra de tareas. Pasando el ratón por encima se ven sus necesidades y su % de uso, y con un clic se la cuida. Sus opciones (tamaño, mostrar el % siempre, arrancar con el ordenador) están en su icono junto al reloj.
+   - También vive en la barra de abajo de Claude Code. Si no la ve, que cierre y vuelva a abrir Claude Code.
    - Ahora es un huevo y eclosiona en cuanto use Claude Code un poco. Come de los tokens que gasta programando.
    - Para verla en grande y cuidarla: abrir una terminal nueva y escribir `claudagotchi`. La primera vez sale una ayuda. Las teclas: `C` comer, `J` jugar, `L` limpiar, `M` medicina, `?` ayuda, `Q` salir.
    - Para ver todo lo que puede hacer sin esperar: `claudagotchi demo`.
