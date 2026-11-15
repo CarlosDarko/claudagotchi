@@ -214,6 +214,7 @@ fn watch_active_window(app: AppHandle) {
         let me = std::process::id() as u64;
         let mut last: Option<ActiveWin> = None;
         let mut hidden_by_us = false;
+        let mut full_count = 0u32;
         loop {
             std::thread::sleep(Duration::from_millis(400));
             let Some(win) = app.get_webview_window("main") else { continue };
@@ -222,11 +223,36 @@ fn watch_active_window(app: AppHandle) {
             if aw.process_id == me {
                 continue;
             }
+            // El propio escritorio y la barra de tareas no cuentan: en Windows son del
+            // Explorador (y miden toda la pantalla); en macOS, del Finder
+            let exe = aw.process_path.file_name().map(|f| f.to_string_lossy().to_lowercase()).unwrap_or_default();
+            let app_l = aw.app_name.to_lowercase();
+            let shell = exe == "explorer.exe" || app_l == "explorer" || app_l == "finder" || aw.title == "Program Manager" || aw.title.is_empty();
+            if shell {
+                // Si estaba escondida por pantalla completa, vuelve
+                if hidden_by_us && !*app.state::<UserHidden>().0.lock().unwrap() {
+                    let _ = win.show();
+                    let _ = win.set_ignore_cursor_events(true);
+                }
+                hidden_by_us = false;
+                full_count = 0;
+                if last.is_some() {
+                    last = None;
+                    let _ = app.emit("active-window", serde_json::Value::Null);
+                }
+                continue;
+            }
             let p = aw.position;
             // En macOS vienen en puntos; en Windows y Linux, en píxeles físicos
             let (ax, ay, aw_, ah) = if cfg!(target_os = "macos") { (p.x * scale, p.y * scale, p.width * scale, p.height * scale) } else { (p.x, p.y, p.width, p.height) };
             let msize = mon.size();
-            let fullscreen = aw_ >= msize.width as f64 - 2.0 && ah >= msize.height as f64 - 2.0 && !aw.title.is_empty();
+            // Pantalla completa de verdad: la ventana mide exactamente lo que el monitor
+            // (una maximizada en Windows sobresale unos píxeles por los bordes)
+            let mpos = mon.position();
+            let covers = (ax - mpos.x as f64).abs() <= 2.0 && (ay - mpos.y as f64).abs() <= 2.0 && (aw_ - msize.width as f64).abs() <= 2.0 && (ah - msize.height as f64).abs() <= 2.0;
+            // Solo se esconde si la pantalla completa dura un poco (1,5 s), nunca por un clic suelto
+            full_count = if covers { full_count + 1 } else { 0 };
+            let fullscreen = full_count >= 4;
             let user_hidden = *app.state::<UserHidden>().0.lock().unwrap();
             if fullscreen && !hidden_by_us && !user_hidden {
                 let _ = win.hide();
