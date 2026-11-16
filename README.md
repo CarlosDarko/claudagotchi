@@ -233,15 +233,15 @@ Está inspirado en [Clauddy](https://github.com/renatoaug/claude-usage-monitor),
 | Login | Su propio OAuth | **Ninguno**: reutiliza el de Claude Code o el `rate_limits` de la statusline |
 | Tu salud | Te sugiere estirar | Los descansos **curan** a la mascota y trabajar sin parar la enferma |
 | Progreso | — | Logros, rachas, 6 etapas, 5 formas según tu modelo y variantes según tu cuidado |
-| Idiomas | Inglés | Castellano, preparado para cualquier idioma |
+| Idiomas | Inglés | Castellano e inglés, preparado para cualquier idioma |
 
 ## Idiomas
 
-La mascota habla en castellano. Todos los textos están en [`src/i18n/es.js`](src/i18n/es.js). Para añadir otro idioma:
+Habla castellano e inglés. Sigue el idioma de tu sistema y se cambia en la pestaña ⚙ o con `claudagotchi idioma en`. Los textos están en [`src/i18n/es.js`](src/i18n/es.js) y [`src/i18n/en.js`](src/i18n/en.js). Para añadir otro idioma:
 
-1. Copia `src/i18n/es.js` como `src/i18n/en.js` (o el código que sea) y traduce los valores. Las claves no se tocan, las `{variables}` se mantienen y las listas pueden tener las frases que quieras.
+1. Copia `src/i18n/es.js` como `src/i18n/fr.js` (o el código que sea) y traduce los valores. Las claves no se tocan, las `{variables}` se mantienen y las listas pueden tener las frases que quieras.
 2. Regístralo en `LOCALES` dentro de [`src/i18n/index.js`](src/i18n/index.js).
-3. Elígelo con `claudagotchi idioma en` o con la variable `CLAUDAGOTCHI_LANG=en`.
+3. Añade su nombre en `LOCALE_NAMES` y elígelo con `claudagotchi idioma fr` o con la variable `CLAUDAGOTCHI_LANG=fr`.
 
 Una clave que falte en la traducción cae al castellano, así que se puede traducir poco a poco.
 

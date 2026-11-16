@@ -124,11 +124,13 @@ async function main() {
       }
       return handleHook(args[0] || 'fin', input)
     }
-    case 'avisos': {
+    case 'avisos':
+    case 'alerts': {
       const { installHooks, uninstallHooks } = await import('../src/hooks.js')
-      if (args[0] === 'no') uninstallHooks()
+      const off = ['no', 'off'].includes(args[0])
+      if (off) uninstallHooks()
       else installHooks()
-      return console.log(args[0] === 'no' ? t('cli.avisosNo') : t('cli.avisosSi'))
+      return console.log(off ? t('cli.avisosNo') : t('cli.avisosSi'))
     }
     case 'conectar':
     case 'login': {

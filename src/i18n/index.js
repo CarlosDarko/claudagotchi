@@ -1,9 +1,11 @@
 // Multiidioma: todos los textos viven en src/i18n/<idioma>.js.
 // Para añadir un idioma: copia es.js a en.js (por ejemplo), tradúcelo y añádelo a LOCALES.
-// Se elige con CLAUDAGOTCHI_LANG=en, con "claudagotchi idioma en" o en config.json.
+// Se elige con CLAUDAGOTCHI_LANG=en, con "claudagotchi idioma en", en config.json o según el sistema.
 import es from './es.js'
+import en from './en.js'
 
-export const LOCALES = { es }
+export const LOCALES = { es, en }
+export const LOCALE_NAMES = { es: 'Español', en: 'English' }
 export const DEFAULT_LOCALE = 'es'
 let current = DEFAULT_LOCALE
 
@@ -13,6 +15,13 @@ export function setLocale(code) {
   return current
 }
 export const getLocale = () => current
+
+// Idioma del sistema: castellano si el sistema está en español, inglés en el resto
+export function systemLocale(env = process.env) {
+  let l = env.LC_ALL || env.LC_MESSAGES || env.LANG || ''
+  if (!l || /^(C|POSIX)/.test(l)) { try { l = Intl.DateTimeFormat().resolvedOptions().locale } catch {} }
+  return String(l || 'en').toLowerCase().startsWith('es') ? 'es' : 'en'
+}
 
 function lookup(key) {
   return LOCALES[current]?.[key] ?? LOCALES[DEFAULT_LOCALE][key]

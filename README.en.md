@@ -6,7 +6,7 @@
 
 ![Claudagotchi walking on the desktop and eating Claude's sparks](docs/img/claudagotchi.gif)
 
-> The interface is in Spanish for now. Everything is ready for translations (`src/i18n/`), and English is next.
+> Available in English and Spanish. It follows your system language, and you can switch it in the ⚙ tab or with `claudagotchi lang en`. Translations live in `src/i18n/`, and new ones are welcome.
 
 ## Install
 
@@ -43,11 +43,11 @@ No Node needed. It starts with your computer, and updates itself with one click.
 - **Real weather** from your city and the seasons in its scene. If it rains, it takes out an umbrella.
 - **41 achievements**, a collection, 8-bit sounds and a shareable card.
 
-![The card with needs, Claude usage and actions](docs/img/widget-tarjeta.png)
+![The card with needs, Claude usage and actions](docs/img/en-widget-tarjeta.png)
 
 | | |
 |---|---|
-| ![Shop](docs/img/widget-tienda.png) | ![Claude Code alert](docs/img/widget-aviso.png) |
+| ![Shop](docs/img/en-widget-tienda.png) | ![Claude Code alert](docs/img/en-widget-aviso.png) |
 
 It also lives in Claude Code's status line and in your terminal (`claudagotchi`), as the same pet.
 

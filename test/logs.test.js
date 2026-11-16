@@ -36,7 +36,7 @@ test('escaneo incremental: solo lee lo nuevo y espera a las líneas completas', 
   const f = path.join(dir, '-home-ana-proyecto-x', 's.jsonl')
   const u = { input_tokens: 0, output_tokens: 1000, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 }
   fs.writeFileSync(f, line(asst(1, now - 60_000, u)) + line({ type: 'user', timestamp: new Date(now - 30_000).toISOString() }))
-  let idx = scan({ dir, save: false, now })
+  let idx = scan({ dir, index: emptyIndex(), save: false, now })
   assert.equal(idx.totals.tokens, 1000)
   assert.equal(idx.lastActivity, now - 30_000)
   // Línea a medio escribir: no se cuenta todavía

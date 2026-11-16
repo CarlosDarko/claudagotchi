@@ -4,7 +4,7 @@ import { files, readJSON, writeJSON } from './paths.js'
 import { newPet, tick, act, reincarnate } from './pet.js'
 import { scan } from './logs.js'
 import { getLimits } from './account.js'
-import { setLocale } from './i18n/index.js'
+import { setLocale, systemLocale } from './i18n/index.js'
 
 export function loadConfig() {
   return readJSON(files.config(), {})
@@ -16,7 +16,7 @@ export function saveConfig(patch) {
 }
 
 export function initLocale() {
-  return setLocale(process.env.CLAUDAGOTCHI_LANG || loadConfig().lang || 'es')
+  return setLocale(process.env.CLAUDAGOTCHI_LANG || loadConfig().lang || systemLocale())
 }
 
 export function loadPet(index, now = Date.now()) {

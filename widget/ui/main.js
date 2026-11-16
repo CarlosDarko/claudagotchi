@@ -5,7 +5,7 @@
 import { drawCritter, CRITTER_W, CRITTER_H, Canvas } from '../../src/sprites.js'
 import { drawIcon, drawMedal, drawYard, drawVisitor, YARD_H, GROUND } from '../../src/art.js'
 import { drawDecor } from '../../src/gear.js'
-import { t, tmap, setLocale } from '../../src/i18n/index.js'
+import { t, tmap, setLocale, getLocale, LOCALE_NAMES } from '../../src/i18n/index.js'
 import { fmtTokens, fmtDuration, fmtClock } from '../../src/util.js'
 import { sfx, setSound } from './sound.js'
 
@@ -861,6 +861,7 @@ function settingsHtml() {
   if (st.weather) html += `<div class="dim small">${esc(t('w.tiempo', { kind: tmap('w.tiempos')[st.weather.kind], temp: Math.round(st.weather.temp ?? 0), city: st.weather.city }))}</div>`
   html += `<div class="setrow"><span>${W.escenario}</span>${seg('scene', [['completo', tmap('w.escenario').completo], ['isla', tmap('w.escenario').isla], ['no', tmap('w.escenario').no]], S.scene)}</div>`
   html += `<div class="setrow"><span>${W.tamano}</span>${seg('scale', [[2, W.pequena], [3, W.mediana], [4, W.grande]], S.scale)}</div>`
+  html += `<div class="setrow"><span>${W.idioma}</span>${seg('lang', Object.entries(LOCALE_NAMES), getLocale())}</div>`
   html += `<div class="setrow"><span>${W.sonido}</span>${sw('sound', S.sound)}</div>`
   html += `<div class="setrow"><span>${W.porcentaje}</span>${sw('showBadge', S.showBadge)}</div>`
   html += `<div class="setrow"><span>${W.avisos}</span>${sw('hooks', st.hooks)}</div>`
@@ -913,7 +914,7 @@ cardEl.addEventListener('keydown', (e) => {
 })
 cardEl.addEventListener('click', async (e) => {
   const d = (k) => e.target.closest(`[data-${k}]`)?.dataset[k]
-  const tab = d('tab'), a = d('a'), g = d('g'), slot = d('slot'), item = d('item'), set = d('set'), scene = d('scene'), scale = d('scale')
+  const tab = d('tab'), a = d('a'), g = d('g'), slot = d('slot'), item = d('item'), set = d('set'), scene = d('scene'), scale = d('scale'), lang = d('lang')
   S.pinned = true
   if (tab || slot || set || scene || scale) sfx('click')
   if (tab) {
@@ -926,6 +927,13 @@ cardEl.addEventListener('click', async (e) => {
     return renderCard()
   }
   if (item) return action(S.state.owned[item] ? 'usar' : 'comprar', item)
+  if (lang) {
+    sfx('click')
+    setLocale(lang)
+    renderCard()
+    await invoke('run_cli', { args: ['idioma', lang] }).catch(() => {})
+    return load()
+  }
   if (scene) return setConfig({ scene })
   if (scale) return setConfig({ scale: Number(scale) })
   if (set === 'sound') return setConfig({ sound: !S.sound })

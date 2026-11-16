@@ -346,7 +346,7 @@ export default {
     nombre: 'Nombre', ciudad: 'Tu ciudad (para el tiempo real)', ciudadEj: 'Madrid, Bogotá...', guardar: 'Guardar',
     escenario: 'Escenario', tamano: 'Tamaño', pequena: 'S', mediana: 'M', grande: 'L', sonido: 'Sonidos',
     porcentaje: 'Mostrar el % siempre', avisos: 'Avisos de Claude Code', compartir: 'Compartir ficha', aldia: 'Al día',
-    privacidad: 'Privacidad', consultar: 'Consultar mi % a Anthropic', versiones: 'Buscar versiones nuevas', desconectar: 'Desconectar cuenta',
+    privacidad: 'Privacidad', consultar: 'Consultar mi % a Anthropic', versiones: 'Buscar versiones nuevas', desconectar: 'Desconectar cuenta', idioma: 'Idioma',
   },
   'w.ficha': {
     edad: '{dur} de vida · generación {gen}', comido: 'Ha comido {tokens} tokens de Claude', logros: '{n} de {total} logros',

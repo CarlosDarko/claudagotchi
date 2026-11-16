@@ -18,14 +18,18 @@ echo "Capturas en docs/img"
 
 # El widget de escritorio en el navegador, sobre un fondo de escritorio
 node widget/build.mjs >/dev/null
+mock() {
 node --input-type=module -e "
+import { setLocale } from './src/i18n/index.js'; setLocale('$1')
 import { demoFrame } from './src/demo.js'; import { snapshot } from './src/snapshot.js'; import fs from 'node:fs'
 const f = demoFrame(6)
 Object.assign(f.pet, { owned: { chistera: 1, pajarita: 1, banco: 1, girasoles: 1, estanque: 1, farolillos: 1, gorra: 1 }, gear: { cabeza: 'chistera', cuello: 'pajarita' }, decor: ['banco', 'girasoles', 'estanque', 'farolillos'], bocados: 23, personality: 'curioso' })
 f.pet.collection = { 'opus-obras': 1, 'sonnet-sabio': 1, 'haiku-hacker': 1, 'mixto-equilibrado': 1, 'fable-explorador': 1, 'robot-secreta': 1 }
 for (const id of ['manos-a-la-obra', 'chef', 'finde', 'fenix']) f.pet.achievements[id] = Date.now()
 const s = snapshot({ ...f, weather: { kind: 'despejado', temp: 18, city: 'Madrid', lat: 40 } }); s.widget = { scale: 2, showBadge: true, scene: 'completo' }
-fs.writeFileSync('widget/dist/mock.json', JSON.stringify(s))"
+fs.writeFileSync('$2', JSON.stringify(s))"
+}
+mock es widget/dist/mock.json
 node tools/widget-preview.cjs widget/dist/mock.json docs/img/widget.png idle
 node tools/widget-preview.cjs widget/dist/mock.json docs/img/widget-tarjeta.png mascota
 node tools/widget-preview.cjs widget/dist/mock.json docs/img/widget-logros.png logros
@@ -33,3 +37,10 @@ node tools/widget-preview.cjs widget/dist/mock.json docs/img/widget-coleccion.pn
 node tools/widget-preview.cjs widget/dist/mock.json docs/img/widget-tienda.png tienda
 node tools/widget-preview.cjs widget/dist/mock.json docs/img/widget-aviso.png alerta:permiso
 node tools/gallery.js critter > "$tmp/mascotas.html" && node tools/shot.cjs "$tmp/mascotas.html" docs/img/mascotas.png 1200 300
+
+
+# Las mismas, en inglés, para README.en.md
+mock en widget/dist/mock-en.json
+for v in tarjeta:mascota tienda:tienda aviso:alerta:permiso ajustes:ajustes; do
+  node tools/widget-preview.cjs widget/dist/mock-en.json "docs/img/en-widget-${v%%:*}.png" "${v#*:}"
+done
