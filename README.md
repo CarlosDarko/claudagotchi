@@ -264,6 +264,10 @@ tools/screenshots.sh
 
 El primero pasa los tests (`node:test`, sin dependencias). El segundo abre la demo. El tercero regenera las capturas de `docs/img` (necesita Playwright). Cómo está hecho por dentro: [`docs/arquitectura.md`](docs/arquitectura.md).
 
+## Firma de código
+
+Los instaladores se compilan solo en GitHub Actions a partir de este repositorio. La política de firma (para SignPath Foundation) está en [`docs/firma.md`](docs/firma.md).
+
 ## Licencia
 
 MIT.
