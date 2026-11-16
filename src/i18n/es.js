@@ -303,7 +303,23 @@ export default {
   },
 
   // Widget de escritorio
-  'w.tabs': { mascota: 'Mascota', tienda: 'Tienda', logros: 'Logros', coleccion: 'Colección', ajustes: '⚙' },
+  'w.tabs': { mascota: 'Mascota', tienda: 'Tienda', logros: 'Logros', coleccion: 'Colección', ajustes: '⚙', guia: '?' },
+  // Guía: cómo funciona todo (pestaña '?' y textos al pasar el ratón por cada necesidad)
+  'w.guia': {
+    intro: 'Tu mascota vive de lo que haces con Claude Code en este ordenador. Así se cuida:',
+    hambre: ['🍖 Hambre', 'Baja 4 puntos por hora. Sube sola con los tokens que gastas con Claude Code (cada 40k tokens, 1 punto) y con Comer (+25, gasta 1 bocado).'],
+    energiaCon: ['⚡ Energía', 'Es lo que te queda de tu sesión de 5 h de Claude: con la sesión al 30 %, tiene 70. Se llena cuando la sesión se reinicia. Al 100 % se duerme hasta el reinicio. Dormir no la cambia.'],
+    energiaSin: ['⚡ Energía', 'Baja mientras Claude trabaja (8 por hora) y sube cuando para (6 por hora). Con Dormir sube mucho más rápido (20 por hora). Si conectas tu cuenta, pasa a ser lo que te queda de sesión.'],
+    felicidad: ['💖 Felicidad', 'Baja 2,5 puntos por hora. Sube jugando, con mimos y chuches, y mientras Claude trabaja a su lado. Si es presumido, también con accesorios puestos.'],
+    salud: ['🩺 Salud', 'Baja si pasa mucha hambre o está muy sucio, si tu semana pasa del 90 % o si llevas más de 2 h trabajando sin parar. Sube cuando todo está bien, con Medicina y cuando descansas después de un rato largo. Si llega a 0, se va a la nube.'],
+    higiene: ['🧼 Higiene', 'Hace caca cada 1,5M tokens o cada 8 h despierto, y eso la baja. Se arregla con Limpiar.'],
+    dormir: ['🌙 Dormir', 'Apaga la luz: gasta la mitad de hambre y felicidad. Sin cuenta conectada, además recupera energía.'],
+    bocados: ['🍪 Bocados', 'La moneda. Ganas 1 cada 150k tokens, 2 al día y alguno en las visitas. Sirven para Comer, Chuche y la Tienda.'],
+    crecer: ['🥚 Cómo crece', 'Huevo (eclosiona al comer 250k tokens), Bebé, Peque (2M tokens y 12 h), Adolescente (15M y 2 días), Adulto (60M y 5 días) y Leyenda (400M, 3 semanas y cuidado de diez).'],
+    forma: ['🧬 Su forma adulta', 'La especie sale del modelo que más usas, el oficio de las herramientas que más usa Claude contigo y la variante de lo bien que lo cuides. Hay 30 formas y 5 secretas: mira Colección.'],
+    avisos: ['✻ Avisos de Claude', 'Te avisa con sonido, saltos y notificación cuando Claude necesita permiso, te espera, termina o te quedan pocos tokens. Se activan en ⚙.'],
+    descuido: ['💤 Si no estás', 'Si nadie lo mira en 12 h, hiberna y deja de gastar: no se te muere el fin de semana.'],
+  },
   'w.aviso': {
     permiso: '✻ ¡Claude necesita tu permiso! ({project})',
     espera: '✻ Claude te está esperando ({project})',

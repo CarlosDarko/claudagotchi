@@ -670,12 +670,13 @@ function renderCard() {
   let html = ''
   if (st.update) html += `<button class="update" data-a="update">✨ ${esc(t('w.update', { v: st.update.latest }))}</button>`
   html += `<div class="head"><span class="name">${esc(p.name)}</span><span class="what">${esc(st.what)}</span><span class="mood"><i style="background:${st.mood === 'fuego' || st.mood === 'enfermo' ? '#FF6B5E' : '#E07A55'}"></i>${esc(st.moodLabel)}</span></div>`
-  html += `<div class="tabs">${['mascota', 'tienda', 'logros', 'coleccion', 'ajustes'].map((k) => `<button data-tab="${k}" class="${S.tab === k ? 'on' : ''}">${T[k]}</button>`).join('')}</div>`
+  html += `<div class="tabs">${['mascota', 'tienda', 'logros', 'coleccion', 'ajustes', 'guia'].map((k) => `<button data-tab="${k}" class="${S.tab === k ? 'on' : ''}">${T[k]}</button>`).join('')}</div>`
   if (S.game) html += gameHtml()
   else if (S.tab === 'tienda') html += shopHtml()
   else if (S.tab === 'logros') html += achievementsHtml()
   else if (S.tab === 'coleccion') html += collectionHtml()
   else if (S.tab === 'ajustes') html += settingsHtml()
+  else if (S.tab === 'guia') html += guideHtml()
   else html += petHtml()
   cardEl.innerHTML = html
 }
@@ -688,7 +689,8 @@ function petHtml() {
     html += '<div class="needs">'
     for (const k of ['hambre', 'felicidad', 'energia', 'salud', 'higiene']) {
       const v = p.stats[k], low = v < 25
-      html += `<span class="lbl${low ? ' low' : ''}">${tmap('stat')[k]}</span>${pips(v, low ? '#FF6B5E' : NEED_COLOR[k])}`
+      const g = guideEntry(k)
+      html += `<span class="lbl${low ? ' low' : ''}" data-info="${esc(g[1])}">${tmap('stat')[k]}</span><span data-info="${esc(g[1])}">${pips(v, low ? '#FF6B5E' : NEED_COLOR[k])}</span>`
     }
     html += '</div>'
     if (st.personalityText) html += `<div class="dim small pers">${esc(st.personalityText[0])} · ${esc(st.personalityText[1])}</div>`
@@ -738,6 +740,24 @@ function petHtml() {
 }
 
 // Tienda: accesorios por hueco y decoración del escenario
+// La guía: cómo funciona cada cosa (la energía depende de si ves el % real)
+function guideEntry(key) {
+  const G = tmap('w.guia')
+  if (key === 'energia') return S.state?.limits ? G.energiaCon : G.energiaSin
+  return G[key] || ['', '']
+}
+
+function guideHtml() {
+  const G = tmap('w.guia')
+  const keys = ['hambre', 'energia', 'felicidad', 'salud', 'higiene', 'dormir', 'bocados', 'crecer', 'forma', 'avisos', 'descuido']
+  let html = `<div class="dim small" style="margin-bottom:8px">${esc(G.intro)}</div><div class="guide">`
+  for (const k of keys) {
+    const [title, text] = guideEntry(k)
+    html += `<div class="gitem"><b>${esc(title)}</b><span>${esc(text)}</span></div>`
+  }
+  return `${html}</div>`
+}
+
 function shopHtml() {
   const st = S.state
   const shop = st.shop

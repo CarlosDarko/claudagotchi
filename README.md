@@ -139,10 +139,12 @@ La mascota vive encima de la barra de tareas, en su escenario a lo ancho de la p
 
 ## Cómo funciona el juego
 
+Todo esto está también dentro de la mascota: en la pestaña **?** de su tarjeta, y al pasar el ratón por cada necesidad.
+
 | Necesidad | Baja con | Sube con |
 |---|---|---|
 | 🍖 **Hambre** | 4 puntos por hora | Tus tokens: cada 40k tokens nuevos es 1 punto. También los bocados |
-| ⚡ **Energía** | Tu sesión de 5 h: es exactamente el reverso de tu % | El reinicio de la ventana. Sin cuenta, descansar |
+| ⚡ **Energía** | Con tu cuenta conectada (ves el %): es lo que te queda de la sesión de 5 h, así que baja según gastas | Se llena cuando la sesión se reinicia. Sin cuenta conectada: baja mientras Claude trabaja y sube cuando para, y mucho más rápido con **Dormir** |
 | 💖 **Felicidad** | 2,5 por hora | Jugar, acariciar, chuches, programar con él al lado, días seguidos |
 | 🧼 **Higiene** | Las cacas (una cada 1,5M tokens o cada 8 h despierto) | Limpiar |
 | 🩺 **Salud** | Hambre o suciedad extremas, la semana por encima del 90 %, más de 2 h trabajando sin parar | Todo en orden, medicina, y los descansos después de un tramo largo |

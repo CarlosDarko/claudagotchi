@@ -84,7 +84,7 @@
   .mood { margin-left: auto; font-size: 11.5px; color: var(--soft); display: flex; align-items: center; gap: 5px; white-space: nowrap; }
   .mood i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
   .tabs { display: flex; gap: 4px; margin: 9px 0 10px; padding: 3px; background: rgba(255,255,255,.05); border-radius: 10px; }
-  .tabs button { all: unset; flex: 1; text-align: center; padding: 4px 0; border-radius: 7px; font-size: 11.5px; color: var(--soft); cursor: pointer; }
+  .tabs button { all: unset; flex: 1; text-align: center; padding: 4px 0; border-radius: 7px; font-size: 11px; color: var(--soft); cursor: pointer; }
   .update { all: unset; display: block; width: 100%; box-sizing: border-box; margin-bottom: 9px; padding: 6px 10px; border-radius: 9px; background: linear-gradient(90deg, #E07A55, #B95FA6); color: #fff; font-weight: 650; font-size: 12px; cursor: pointer; text-align: center; }
   .pers { margin-top: 6px; }
   .alertrow { color: #fff; background: rgba(224,122,85,.85); padding: 5px 8px; border-radius: 8px; font-weight: 600; }
@@ -117,6 +117,10 @@
   .switch.on { background: var(--green); }
   .switch.on i { left: 17px; }
   .actions.two { grid-template-columns: 1fr 1fr; }
+  .guide { display: grid; gap: 8px; max-height: 360px; overflow-y: auto; padding-right: 4px; }
+  .guide::-webkit-scrollbar { width: 5px; } .guide::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 3px; }
+  .gitem { display: grid; gap: 2px; font-size: 12px; line-height: 1.38; color: var(--soft); }
+  .gitem b { color: var(--text); font-weight: 650; }
   .tabs button.on { background: rgba(255,255,255,.12); color: var(--text); font-weight: 650; }
   .tabs button:hover:not(.on) { color: var(--text); }
   .needs { display: grid; grid-template-columns: 74px 1fr; row-gap: 3px; align-items: center; }
