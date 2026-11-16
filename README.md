@@ -1,10 +1,20 @@
 # Claudagotchi
 
+*[Read in English](README.en.md)*
+
 Una mascota tipo tamagotchi que vive **en tu escritorio**, en la barra de estado de Claude Code y en tu terminal, y que **se alimenta de tu uso real de Claude**. Cuanto más programas, más come y más crece. Si te pasas, se quema. Si llegas al límite de la sesión, se duerme hasta que se reinicia. Y si llevas horas sin parar, te pide que descanses (y se cura cuando lo haces).
 
-![Tu mascota en su isla, encima de la barra de tareas, con la tarjeta abierta](docs/img/widget-tarjeta.png)
+![Tu mascota paseando por el escritorio y comiéndose las chispas de Claude](docs/img/claudagotchi.gif)
 
 ## Instalarlo
+
+### Con winget (Windows, sin avisos)
+
+Cuando esté aprobado en el catálogo de Microsoft:
+
+```powershell
+winget install CarlosDarko.Claudagotchi
+```
 
 ### En Windows: descarga y doble clic
 

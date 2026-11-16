@@ -1216,3 +1216,5 @@ window.__claudagotchiOpen = (tab) => {
   renderCard()
 }
 window.__claudagotchiAlert = (kind) => claudeAlert(kind, { project: 'mi-web' })
+window.__claudagotchiSparks = (n) => sparks(n)
+window.__claudagotchiFx = { hearts, say, sfx }
