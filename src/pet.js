@@ -262,7 +262,7 @@ function step(s, h, { working, pct, weekPct, index, now }) {
   // Energía: con la cuenta conectada es el reverso de tu sesión. Sin ella, se cansa trabajando.
   if (pct != null) {
     const target = 100 - pct
-    st.energia = clamp(st.energia + (target - st.energia) * Math.min(1, h * 4))
+    st.energia = clamp(target) // con el % real, la energía es lo que te queda de sesión
   } else if (asleep) st.energia = clamp(st.energia + 20 * h)
   else st.energia = clamp(st.energia + (working ? -8 * (tr.energia || 1) : 6) * h)
 
