@@ -969,7 +969,11 @@ cardEl.addEventListener('click', async (e) => {
     return load()
   }
   if (a === 'share') return shareCard()
-  if (a === 'update') return invoke('update_now')
+  if (a === 'update') {
+    say(t('w.actualizando'), false, 10_000)
+    sfx('comprar')
+    return invoke('update_now')
+  }
   if (a === 'full') return invoke('open_full')
   if (a === 'escenario') return setConfig({ scene: SCENES[(SCENES.indexOf(S.scene) + 1) % SCENES.length] })
   if (a === 'jugar') {

@@ -332,6 +332,7 @@ export default {
   'w.bienvenida': '¡Hola! He activado: arrancar con el ordenador, los avisos de Claude Code y el comando claudagotchi en tu terminal. Se puede quitar todo en ⚙ y en mi icono junto al reloj.',
   'w.update': 'Versión {v} disponible · Actualizar',
   'w.actualizar': 'Actualizar',
+  'w.actualizando': '¡Me actualizo! Vuelvo en un minuto.',
   'w.tiempo': '{kind}, {temp} °C en {city}',
   'w.tiempos': { despejado: 'Despejado', nublado: 'Nublado', niebla: 'Niebla', lluvia: 'Lluvia', nieve: 'Nieve', tormenta: 'Tormenta' },
   'w.tienda': {

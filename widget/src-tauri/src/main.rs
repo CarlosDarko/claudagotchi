@@ -150,23 +150,70 @@ fn save_png(app: AppHandle, name: String, data: String) -> Result<String, String
     Ok(f)
 }
 
-// Actualizar: lanza el instalador de una línea por separado y se cierra; el
-// instalador descarga la versión nueva y vuelve a abrir la mascota
+// Actualizar: un script aparte espera a que la mascota se cierre, descarga la versión
+// nueva, la instala y vuelve a abrirla. En Windows deja un registro en
+// %TEMP%\claudagotchi-actualizar.log por si algo falla.
 #[tauri::command]
 fn update_now(app: AppHandle) {
-    let base = "https://raw.githubusercontent.com/CarlosDarko/claudagotchi/main";
+    let me = std::env::current_exe().unwrap_or_default().to_string_lossy().to_string();
+    let pid = std::process::id();
     #[cfg(windows)]
     {
         use std::os::windows::process::CommandExt;
-        let script = format!("Start-Sleep -Seconds 2; $env:CLAUDAGOTCHI_NO_OPEN='1'; irm {}/install.ps1 | iex", base);
-        let _ = Command::new("powershell").args(["-NoProfile", "-WindowStyle", "Hidden", "-Command", &script]).creation_flags(0x0800_0000 | 0x0000_0008).spawn();
+        let rel = "https://github.com/CarlosDarko/claudagotchi/releases/latest/download";
+        let script = format!(
+            r#"$ErrorActionPreference = 'Continue'
+Start-Transcript -Path (Join-Path $env:TEMP 'claudagotchi-actualizar.log') -Force | Out-Null
+try {{ Wait-Process -Id {pid} -Timeout 20 -ErrorAction SilentlyContinue }} catch {{}}
+Start-Sleep -Seconds 1
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+$setup = Join-Path $env:TEMP 'Claudagotchi-setup.exe'
+try {{
+  Invoke-WebRequest '{rel}/Claudagotchi-windows-x64-setup.exe' -OutFile $setup -UseBasicParsing
+  $p = Start-Process $setup -ArgumentList '/S' -Wait -PassThru
+  "Instalador terminado: $($p.ExitCode)"
+}} catch {{ "Fallo al descargar o instalar: $_" }}
+$cli = Join-Path $env:LOCALAPPDATA 'Programs\claudagotchi'
+if (Test-Path (Join-Path $cli 'claudagotchi.exe')) {{
+  try {{
+    $zip = Join-Path $env:TEMP 'claudagotchi-cli.zip'
+    Invoke-WebRequest '{rel}/claudagotchi-windows-x64.zip' -OutFile $zip -UseBasicParsing
+    Expand-Archive -Path $zip -DestinationPath $cli -Force
+  }} catch {{ "Fallo al actualizar el comando: $_" }}
+}}
+$app = '{me}'
+if (-not (Test-Path $app)) {{ $app = Join-Path $env:LOCALAPPDATA 'Claudagotchi\claudagotchi-widget.exe' }}
+"Abriendo $app"
+Start-Process $app
+Stop-Transcript | Out-Null
+"#,
+            pid = pid,
+            rel = rel,
+            me = me.replace('\'', "''")
+        );
+        let file = std::env::temp_dir().join("claudagotchi-actualizar.ps1");
+        if std::fs::write(&file, script).is_ok() {
+            let f = file.to_string_lossy().to_string();
+            let args = ["-NoProfile", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden", "-File", &f];
+            // CREATE_NO_WINDOW | CREATE_BREAKAWAY_FROM_JOB (para que no muera con la mascota)
+            let ok = Command::new("powershell").args(args).creation_flags(0x0800_0000 | 0x0100_0000).spawn().is_ok();
+            if !ok {
+                let _ = Command::new("powershell").args(args).creation_flags(0x0800_0000).spawn();
+            }
+        }
     }
     #[cfg(unix)]
     {
-        let script = format!("sleep 2; curl -fsSL {}/install.sh | CLAUDAGOTCHI_NO_OPEN=1 bash", base);
+        let base = "https://raw.githubusercontent.com/CarlosDarko/claudagotchi/main";
+        let script = format!("sleep 2; curl -fsSL {}/install.sh | CLAUDAGOTCHI_NO_OPEN=1 bash > /tmp/claudagotchi-actualizar.log 2>&1", base);
         let _ = Command::new("sh").args(["-c", &format!("nohup sh -c '{}' >/dev/null 2>&1 &", script)]).spawn();
     }
-    app.exit(0);
+    let _ = (me, pid);
+    // Un momento para que se vea el aviso antes de cerrar
+    std::thread::spawn(move || {
+        std::thread::sleep(Duration::from_millis(1200));
+        app.exit(0);
+    });
 }
 
 #[tauri::command]
