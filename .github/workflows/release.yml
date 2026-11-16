@@ -140,4 +140,4 @@ jobs:
       - name: Publicar
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${{ needs.check.outputs.tag }}" out/* --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "Claudagotchi ${{ needs.check.outputs.tag }}" --generate-notes
+        run: gh release create "${{ needs.check.outputs.tag }}" out/* --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "Claudagotchi ${{ needs.check.outputs.tag }}" --generate-notes --notes "**Code signing policy**: Free code signing provided by SignPath.io, certificate by SignPath Foundation. Policy: https://github.com/${{ github.repository }}/blob/main/docs/firma.md · Privacy: https://github.com/${{ github.repository }}/blob/main/docs/privacidad.md"

@@ -1,0 +1,39 @@
+CLAUDAGOTCHI - Antes de instalar / Before installing
+
+QUÉ CAMBIA EN TU ORDENADOR
+- Instala la mascota de escritorio en tu carpeta de usuario.
+- La primera vez que arranca: se pone a arrancar con el ordenador, activa los avisos de Claude Code (hooks Notification y Stop en ~/.claude/settings.json, sin tocar los tuyos) y añade el comando 'claudagotchi' a tu terminal.
+- Todo se puede quitar desde su icono junto al reloj o en la pestaña ⚙. Para desinstalar: Configuración → Aplicaciones → Claudagotchi, y 'claudagotchi desinstalar' para quitar los avisos.
+
+PRIVACIDAD
+- Sin telemetría ni servidores propios. Tus datos se quedan en ~/.claudagotchi.
+- Se conecta solo a: Anthropic (tu % de uso, con tu sesión de Claude), GitHub (versiones nuevas) y Open-Meteo (el tiempo, solo si pones una ciudad). Cada conexión se apaga en ⚙.
+- Política completa: https://github.com/CarlosDarko/claudagotchi/blob/main/docs/privacidad.md
+
+WHAT CHANGES / PRIVACY (English)
+On first run it starts with your computer, enables Claude Code hooks and adds the 'claudagotchi' command to your PATH. All can be turned off. No telemetry. It only contacts Anthropic (your usage %), GitHub (updates) and Open-Meteo (weather, only if you set a city); each can be disabled in the ⚙ tab.
+
+Free code signing provided by SignPath.io, certificate by SignPath Foundation.
+
+--------------------------------------------------------------------------
+MIT License
+
+Copyright (c) 2026 Carlos Ortega
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

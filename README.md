@@ -237,6 +237,8 @@ Una clave que falte en la traducción cae al castellano, así que se puede tradu
 
 ## Privacidad
 
+Política completa: [`docs/privacidad.md`](docs/privacidad.md). Cada conexión se puede apagar en la pestaña ⚙.
+
 Todo se queda en tu máquina, en `~/.claudagotchi/`:
 
 | Fichero | Guarda |
@@ -264,9 +266,20 @@ tools/screenshots.sh
 
 El primero pasa los tests (`node:test`, sin dependencias). El segundo abre la demo. El tercero regenera las capturas de `docs/img` (necesita Playwright). Cómo está hecho por dentro: [`docs/arquitectura.md`](docs/arquitectura.md).
 
-## Firma de código
+## Code signing policy
 
-Los instaladores se compilan solo en GitHub Actions a partir de este repositorio. La política de firma (para SignPath Foundation) está en [`docs/firma.md`](docs/firma.md).
+Free code signing provided by SignPath.io, certificate by SignPath Foundation.
+
+Los instaladores se compilan solo en GitHub Actions a partir de este repositorio. Política completa, equipo y funciones: [`docs/firma.md`](docs/firma.md). Privacidad: [`docs/privacidad.md`](docs/privacidad.md).
+
+## Desinstalar
+
+1. En la mascota, abre ⚙ y apaga 'Avisos de Claude Code', o escribe `claudagotchi desinstalar` en una terminal: quita la barra de estado y los avisos de Claude Code y devuelve la barra que tuvieras antes.
+2. Quita la app:
+   - **Windows**: Configuración → Aplicaciones → Claudagotchi → Desinstalar. Si instalaste con PowerShell, borra también `%LOCALAPPDATA%\Programs\claudagotchi`.
+   - **macOS**: borra `~/Applications/Claudagotchi.app` y `~/.claudagotchi/bin`.
+   - **Linux**: borra `~/.claudagotchi/bin`.
+3. Si quieres borrar también tu mascota y sus datos, borra la carpeta `~/.claudagotchi` (en Windows, `C:\Users\<tú>\.claudagotchi`).
 
 ## Licencia
 

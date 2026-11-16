@@ -36,6 +36,9 @@ if (-not $env:CLAUDAGOTCHI_SIN_WIDGET) {
 }
 
 Write-Host ''
+Write-Host "Qué ha cambiado: la barra de estado y los avisos (hooks) de Claude Code en ~/.claude/settings.json, el comando 'claudagotchi' en tu terminal y, con la mascota de escritorio, arrancar con el ordenador. Se quita todo con 'claudagotchi desinstalar' y desde su menú."
+Write-Host "Privacidad: https://github.com/$repo/blob/main/docs/privacidad.md"
+Write-Host ''
 Write-Host 'Listo. Tu mascota ya vive en la barra de abajo de Claude Code.' -ForegroundColor Green
 if ($widget) {
   Write-Host 'Y en tu escritorio: pasea por encima de la barra de tareas. Pasa el ratón por encima para verla, clic para cuidarla.'

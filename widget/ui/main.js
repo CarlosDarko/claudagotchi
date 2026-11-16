@@ -151,6 +151,15 @@ function apply(state) {
   S.sound = w.sound ?? S.sound
   setSound(S.sound, w.volume ?? 0.35)
   if (w.home != null && S.home == null) S.home = w.home
+  // Primer arranque: cuenta qué ha activado y cómo quitarlo
+  if (!w.welcomed && TAURI) {
+    S.state.widget = { ...w, welcomed: true }
+    invoke('set_config', { patch: JSON.stringify({ welcomed: true }) })
+    setTimeout(() => {
+      say(t('w.bienvenida'), false, 20_000)
+      invoke('notify', { title: 'Claudagotchi', body: t('w.bienvenida') }).catch(() => {})
+    }, 2500)
+  }
 
   if (prev) {
     if (prev.pet.stage === 'huevo' && state.pet.stage !== 'huevo') hatch()
@@ -855,6 +864,10 @@ function settingsHtml() {
   html += `<div class="setrow"><span>${W.sonido}</span>${sw('sound', S.sound)}</div>`
   html += `<div class="setrow"><span>${W.porcentaje}</span>${sw('showBadge', S.showBadge)}</div>`
   html += `<div class="setrow"><span>${W.avisos}</span>${sw('hooks', st.hooks)}</div>`
+  html += `<div class="section">${W.privacidad}</div>`
+  html += `<div class="setrow"><span>${W.consultar}</span>${sw('noUsage', !st.widget?.noUsage)}</div>`
+  html += `<div class="setrow"><span>${W.versiones}</span>${sw('noUpdates', !st.widget?.noUpdates)}</div>`
+  if (st.connected) html += `<div class="setrow"><span></span><button class="link" data-a="disconnect">${W.desconectar}</button></div>`
   html += `<div class="actions two"><button data-a="share"><img src="${toDataURL(drawIcon('escenario'), 'i-escenario')}" alt=""><small>${W.compartir}</small></button><button data-a="full"><img src="${toDataURL(drawIcon('luz'), 'i-luz')}" alt=""><small>${t('w.verTodo')}</small></button></div>`
   html += `<div class="foot"><span>Claudagotchi ${esc(st.version)}</span>${st.update ? `<button class="link" data-a="update">${t('w.actualizar')}</button>` : `<span>${W.aldia}</span>`}</div>`
   return html
@@ -917,6 +930,14 @@ cardEl.addEventListener('click', async (e) => {
   if (scale) return setConfig({ scale: Number(scale) })
   if (set === 'sound') return setConfig({ sound: !S.sound })
   if (set === 'showBadge') return setConfig({ showBadge: !S.showBadge })
+  if (set === 'noUsage' || set === 'noUpdates') {
+    await setConfig({ [set]: !S.state.widget?.[set] })
+    return load()
+  }
+  if (a === 'disconnect') {
+    await invoke('run_cli', { args: ['desconectar'] }).catch(() => {})
+    return load()
+  }
   if (set === 'hooks') {
     const on = !S.state.hooks
     S.state.hooks = on // se ve al instante

@@ -170,7 +170,10 @@ export async function fetchLimits({ fetchImpl = globalThis.fetch, creds = undefi
 }
 
 // Devuelve los límites actuales usando la mejor fuente disponible.
+export const usageDisabled = () => !!readJSON(files.config(), {}).widget?.noUsage
+
 export async function getLimits({ fromStatusline = null, allowNetwork = true, now = Date.now(), fetchImpl } = {}) {
+  if (usageDisabled()) return null // apagado por el usuario en ⚙
   const cache = readJSON(files.limits(), {})
   if (fromStatusline) {
     const lim = normalizeLimits(fromStatusline, 'statusline', now)
@@ -200,6 +203,7 @@ function withExpiry(lim, now) {
 }
 
 export function lastError() {
+  if (usageDisabled()) return 'desactivado'
   return readJSON(files.limits(), {}).error || null
 }
 

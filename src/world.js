@@ -64,6 +64,7 @@ const newer = (a, b) => {
 }
 
 export async function checkUpdate(now = Date.now()) {
+  if (loadConfig().widget?.noUpdates) return null // apagado por el usuario en ⚙
   const cache = readJSON(updateFile(), {})
   if (!(cache.at && now - cache.at < 3600_000)) {
     try {

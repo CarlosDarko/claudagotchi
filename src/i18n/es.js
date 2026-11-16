@@ -329,6 +329,7 @@ export default {
   'w.avisoCorto': { permiso: 'Permiso', espera: 'Te espera', fin: '¡Listo!', limite: '¡Ojo!' },
   'w.nacidoNombre': '¡Ha nacido! Ponle nombre en ⚙ (clic en la mascota).',
   'w.secretas': 'Formas secretas',
+  'w.bienvenida': '¡Hola! He activado: arrancar con el ordenador, los avisos de Claude Code y el comando claudagotchi en tu terminal. Se puede quitar todo en ⚙ y en mi icono junto al reloj.',
   'w.update': 'Versión {v} disponible · Actualizar',
   'w.actualizar': 'Actualizar',
   'w.tiempo': '{kind}, {temp} °C en {city}',
@@ -344,6 +345,7 @@ export default {
     nombre: 'Nombre', ciudad: 'Tu ciudad (para el tiempo real)', ciudadEj: 'Madrid, Bogotá...', guardar: 'Guardar',
     escenario: 'Escenario', tamano: 'Tamaño', pequena: 'S', mediana: 'M', grande: 'L', sonido: 'Sonidos',
     porcentaje: 'Mostrar el % siempre', avisos: 'Avisos de Claude Code', compartir: 'Compartir ficha', aldia: 'Al día',
+    privacidad: 'Privacidad', consultar: 'Consultar mi % a Anthropic', versiones: 'Buscar versiones nuevas', desconectar: 'Desconectar cuenta',
   },
   'w.ficha': {
     edad: '{dur} de vida · generación {gen}', comido: 'Ha comido {tokens} tokens de Claude', logros: '{n} de {total} logros',
@@ -383,6 +385,7 @@ export default {
   'w.bloqueado': '¿{name}?',
   'w.sinPorQue': {
     'sin-credenciales': 'Para ver tu % real, conecta tu cuenta de Claude.',
+    desactivado: 'La consulta del % está apagada en ⚙.',
     'token-caducado': 'Sin % real: tu sesión de Claude Code caducó. Ábrelo un momento y se renueva.',
     timeout: 'Sin % real: la consulta tardó demasiado. Lo reintento en unos minutos.',
     red: 'Sin % real: no hay conexión ahora mismo.',

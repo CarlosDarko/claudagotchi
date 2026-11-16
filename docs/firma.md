@@ -4,6 +4,8 @@
 
 ## Castellano
 
+Free code signing provided by SignPath.io, certificate by SignPath Foundation.
+
 Los instaladores de Windows de Claudagotchi se firman gracias a [SignPath.io](https://about.signpath.io), con un certificado de [SignPath Foundation](https://signpath.org), que firma gratis proyectos de código abierto.
 
 - **Qué se firma**: solo lo que compila GitHub Actions a partir de este repositorio público (`.github/workflows/release.yml`). Nunca se firma nada compilado a mano.
@@ -12,7 +14,7 @@ Los instaladores de Windows de Claudagotchi se firman gracias a [SignPath.io](ht
   - Autor y aprobador de las firmas: [@CarlosDarko](https://github.com/CarlosDarko)
   - Revisores: [@CarlosDarko](https://github.com/CarlosDarko)
 - **Cuentas**: las cuentas con permiso para publicar usan verificación en dos pasos.
-- **Privacidad**: el programa no envía datos a ningún sitio salvo lo que explica el apartado [Privacidad del README](../README.md#privacidad). No tiene telemetría.
+- **Privacidad**: [política de privacidad](privacidad.md). No tiene telemetría y cada conexión se puede desactivar.
 
 ## English
 
@@ -24,4 +26,4 @@ Free code signing provided by [SignPath.io](https://about.signpath.io), certific
   - Committer and approver: [@CarlosDarko](https://github.com/CarlosDarko)
   - Reviewer: [@CarlosDarko](https://github.com/CarlosDarko)
 - **Accounts**: accounts with release permissions use multi-factor authentication.
-- **Privacy**: this program does not transfer any information to networked systems except what is described in the [README privacy section](../README.md#privacidad) (the Anthropic usage API, the GitHub release check and, if you set a city, the Open-Meteo weather API). No telemetry.
+- **Privacy**: see the [privacy policy](privacidad.md). This program does not transfer any information to networked systems except the Anthropic usage API, the GitHub release check and, only if you set a city, the Open-Meteo weather API. Each can be turned off. No telemetry.
